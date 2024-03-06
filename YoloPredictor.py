@@ -4,11 +4,13 @@ import time
 import cv2
 import datetime
 import os
+import torch
 from ultralytics.data.loaders import LoadStreams
 from ultralytics.engine.predictor import BasePredictor
 from ultralytics.utils.torch_utils import smart_inference_mode
 from utils.draw_img import draw_boxes, is_integer_string
-from UCMCTracker.ucmcTracker import UCMCTracker
+from tracker.UCMCTracker.ucmcTracker import UCMCTracker
+from tracker.DeepSortTracker.deepsort import DeepSortTracker
 from utils.chart import Scatter, analyzeData
 
 video_id_count = 0
@@ -36,6 +38,7 @@ class YoloPredictor(BasePredictor, QObject):
         self.conf_thres = 0.01           # conf
         self.progress_value = 0          # 进度条的值
         self.lock_id = None              # 锁定的ID
+        self.tracker = 'UCMCTracker'     # 跟踪器
 
     # 单目标跟踪
     def single_object_tracking(self, dets, img_box, org, store_xyxy_for_id):
@@ -102,6 +105,7 @@ class YoloPredictor(BasePredictor, QObject):
             class_list = [0, 1, 2, 5, 7, 8]
             ucmcTracker = UCMCTracker(
                 self.new_model_name, cap.get(cv2.CAP_PROP_FPS))
+            deepsortTracker = DeepSortTracker(self.new_model_name)
             # 循环读取视频帧
             frame_id = 1
             while True:
@@ -111,10 +115,36 @@ class YoloPredictor(BasePredictor, QObject):
                         org = np.copy(img_box)
                         if not ret:
                             break
-
-                        dets = ucmcTracker.detector.get_dets(
-                            img_box, class_list, self.conf_thres)
-                        ucmcTracker.tracker.update(dets, frame_id)
+                        if self.tracker == 'UCMCTracker':
+                            dets = ucmcTracker.detector.get_dets(
+                                img_box, class_list, self.conf_thres)
+                            ucmcTracker.tracker.update(dets, frame_id)
+                        elif self.tracker == 'DeepSort':
+                            dets = deepsortTracker.detector.get_dets(
+                                img_box, class_list, self.conf_thres)
+                            # 将 dets 转换为 DeepSort 所需的格式
+                            bbox_xywh = []
+                            confidences = []
+                            cls_ids = []
+                            for det in dets:
+                                bbox_xywh.append(
+                                    [det.bb_left, det.bb_top, det.bb_width, det.bb_height])
+                                confidences.append(det.conf)
+                                cls_ids.append(det.det_class)
+                            bbox_xywh = torch.Tensor(bbox_xywh)
+                            confidences = torch.Tensor(confidences)
+                            # 使用 DeepSort 的 update 函数更新跟踪器的状态
+                            outputs = deepsortTracker.tracker.update(
+                                bbox_xywh, confidences, cls_ids, org)
+                            # 将检测到的目标 ID 赋值给 det.track_id，并更新 bbox 值
+                            for output, det in zip(outputs, dets):
+                                x1, y1, x2, y2, track_id,track_oid  = output
+                                det.bb_left = x1
+                                det.bb_top = y1
+                                det.bb_width = x2 - x1
+                                det.bb_height = y2 - y1
+                                det.track_id = track_id
+                                det.det_class = track_oid
 
                         bbox_xyxy = []
                         identities = []

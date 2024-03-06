@@ -15,6 +15,7 @@ pandas>=2.0.1
 lap>=0.4
 filterpy
 argparse
-ultralytics
+easydict
+pyecharts
 
 # pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121

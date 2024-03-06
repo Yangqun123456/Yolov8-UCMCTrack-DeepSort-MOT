@@ -126,6 +126,7 @@ class MainWindow(QMainWindow):
         self.Qtimer_ModelBox.timeout.connect(self.ModelBoxRefre)
         self.Qtimer_ModelBox.start(2000)
         widgets.model_box.currentTextChanged.connect(self.change_model)
+        widgets.trackerMethod.currentTextChanged.connect(self.change_tracker_model)
         # 更改置信度
         widgets.conf_spinbox.valueChanged.connect(
             lambda x: self.change_val(x, 'conf_spinbox'))
@@ -226,6 +227,7 @@ class MainWindow(QMainWindow):
             if widgets.run_button.isChecked():
                 widgets.run_button.setChecked(True)
                 widgets.model_box.setEnabled(False)
+                widgets.trackerMethod.setEnabled(False)
                 widgets.conf_slider.setEnabled(False)
                 widgets.conf_spinbox.setEnabled(False)
 
@@ -253,6 +255,7 @@ class MainWindow(QMainWindow):
         self.yolo_predict.stop_dtc = True
         widgets.run_button.setChecked(False)  # 恢复按钮状态
         widgets.model_box.setEnabled(True)  # 恢复模型选择
+        widgets.trackerMethod.setEnabled(True)  # 恢复跟踪算法选择
         widgets.conf_slider.setEnabled(True)
         widgets.conf_spinbox.setEnabled(True)
         widgets.res_video.clear()  # 清空视频显示
@@ -375,7 +378,11 @@ class MainWindow(QMainWindow):
         self.select_model = widgets.model_box.currentText()
         self.yolo_predict.new_model_name = "./weights/%s" % self.select_model
         self.show_status('更改模型：%s' % self.select_model)
-
+    # 跟踪算法更换
+    def change_tracker_model(self, x):
+        self.yolo_predict.tracker = widgets.trackerMethod.currentText()
+        self.show_status('更改跟踪算法：%s' % widgets.trackerMethod.currentText())
+    
     # 循环监测文件夹的文件变化
     def ModelBoxRefre(self):
         pt_list = os.listdir('./weights')

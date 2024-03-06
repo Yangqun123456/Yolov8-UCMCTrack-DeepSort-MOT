@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainJIghmA.ui'
+## Form generated from reading UI file 'mainRhFYMJ.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.6.2
 ##
@@ -815,10 +815,8 @@ class Ui_MainWindow(object):
         self.extraTopMenu.setMinimumSize(QSize(0, 0))
         self.extraTopMenu.setFrameShape(QFrame.NoFrame)
         self.extraTopMenu.setFrameShadow(QFrame.Raised)
-        self.verticalLayout_11 = QVBoxLayout(self.extraTopMenu)
-        self.verticalLayout_11.setSpacing(6)
-        self.verticalLayout_11.setObjectName(u"verticalLayout_11")
-        self.verticalLayout_11.setContentsMargins(9, 9, 9, 9)
+        self.verticalLayout_27 = QVBoxLayout(self.extraTopMenu)
+        self.verticalLayout_27.setObjectName(u"verticalLayout_27")
         self.verticalLayout_26 = QVBoxLayout()
         self.verticalLayout_26.setObjectName(u"verticalLayout_26")
         self.verticalLayout_26.setContentsMargins(9, 9, 9, 9)
@@ -860,7 +858,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_26.addLayout(self.horizontalLayout_13)
 
 
-        self.verticalLayout_11.addLayout(self.verticalLayout_26)
+        self.verticalLayout_27.addLayout(self.verticalLayout_26)
 
         self.verticalLayout_13 = QVBoxLayout()
         self.verticalLayout_13.setObjectName(u"verticalLayout_13")
@@ -894,7 +892,30 @@ class Ui_MainWindow(object):
         self.verticalLayout_13.addWidget(self.model_box)
 
 
-        self.verticalLayout_11.addLayout(self.verticalLayout_13)
+        self.verticalLayout_27.addLayout(self.verticalLayout_13)
+
+        self.verticalLayout_11 = QVBoxLayout()
+        self.verticalLayout_11.setObjectName(u"verticalLayout_11")
+        self.verticalLayout_11.setContentsMargins(9, 9, 9, 9)
+        self.pushButton_4 = QPushButton(self.extraTopMenu)
+        self.pushButton_4.setObjectName(u"pushButton_4")
+        self.pushButton_4.setEnabled(False)
+        icon3 = QIcon()
+        icon3.addFile(u":/icons/images/icons/cil-code.png", QSize(), QIcon.Normal, QIcon.Off)
+        self.pushButton_4.setIcon(icon3)
+
+        self.verticalLayout_11.addWidget(self.pushButton_4)
+
+        self.trackerMethod = QComboBox(self.extraTopMenu)
+        self.trackerMethod.addItem("")
+        self.trackerMethod.addItem("")
+        self.trackerMethod.setObjectName(u"trackerMethod")
+        self.trackerMethod.setStyleSheet(u"background-color: rgb(33, 37, 43);")
+
+        self.verticalLayout_11.addWidget(self.trackerMethod)
+
+
+        self.verticalLayout_27.addLayout(self.verticalLayout_11)
 
 
         self.verticalLayout_12.addWidget(self.extraTopMenu, 0, Qt.AlignTop)
@@ -982,9 +1003,9 @@ class Ui_MainWindow(object):
         self.settingsTopBtn.setMinimumSize(QSize(28, 28))
         self.settingsTopBtn.setMaximumSize(QSize(28, 28))
         self.settingsTopBtn.setCursor(QCursor(Qt.PointingHandCursor))
-        icon3 = QIcon()
-        icon3.addFile(u":/icons/images/icons/icon_settings.png", QSize(), QIcon.Normal, QIcon.Off)
-        self.settingsTopBtn.setIcon(icon3)
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/images/icons/icon_settings.png", QSize(), QIcon.Normal, QIcon.Off)
+        self.settingsTopBtn.setIcon(icon4)
         self.settingsTopBtn.setIconSize(QSize(20, 20))
         self.settingsTopBtn.setCheckable(False)
         self.settingsTopBtn.setChecked(False)
@@ -996,9 +1017,9 @@ class Ui_MainWindow(object):
         self.minimizeAppBtn.setMinimumSize(QSize(28, 28))
         self.minimizeAppBtn.setMaximumSize(QSize(28, 28))
         self.minimizeAppBtn.setCursor(QCursor(Qt.PointingHandCursor))
-        icon4 = QIcon()
-        icon4.addFile(u":/icons/images/icons/icon_minimize.png", QSize(), QIcon.Normal, QIcon.Off)
-        self.minimizeAppBtn.setIcon(icon4)
+        icon5 = QIcon()
+        icon5.addFile(u":/icons/images/icons/icon_minimize.png", QSize(), QIcon.Normal, QIcon.Off)
+        self.minimizeAppBtn.setIcon(icon5)
         self.minimizeAppBtn.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.minimizeAppBtn)
@@ -1015,9 +1036,9 @@ class Ui_MainWindow(object):
         font3.setStyleStrategy(QFont.PreferDefault)
         self.maximizeRestoreAppBtn.setFont(font3)
         self.maximizeRestoreAppBtn.setCursor(QCursor(Qt.PointingHandCursor))
-        icon5 = QIcon()
-        icon5.addFile(u":/icons/images/icons/icon_maximize.png", QSize(), QIcon.Normal, QIcon.Off)
-        self.maximizeRestoreAppBtn.setIcon(icon5)
+        icon6 = QIcon()
+        icon6.addFile(u":/icons/images/icons/icon_maximize.png", QSize(), QIcon.Normal, QIcon.Off)
+        self.maximizeRestoreAppBtn.setIcon(icon6)
         self.maximizeRestoreAppBtn.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.maximizeRestoreAppBtn)
@@ -1106,10 +1127,10 @@ class Ui_MainWindow(object):
         self.run_button.setMinimumSize(QSize(0, 30))
         self.run_button.setMaximumSize(QSize(16777215, 30))
         self.run_button.setCursor(QCursor(Qt.ArrowCursor))
-        icon6 = QIcon()
-        icon6.addFile(u":/icons/images/icons/cil-media-play.png", QSize(), QIcon.Normal, QIcon.Off)
-        icon6.addFile(u":/icons/images/icons/cil-media-pause.png", QSize(), QIcon.Normal, QIcon.On)
-        self.run_button.setIcon(icon6)
+        icon7 = QIcon()
+        icon7.addFile(u":/icons/images/icons/cil-media-play.png", QSize(), QIcon.Normal, QIcon.Off)
+        icon7.addFile(u":/icons/images/icons/cil-media-pause.png", QSize(), QIcon.Normal, QIcon.On)
+        self.run_button.setIcon(icon7)
         self.run_button.setIconSize(QSize(30, 30))
         self.run_button.setCheckable(True)
         self.run_button.setChecked(False)
@@ -1131,9 +1152,9 @@ class Ui_MainWindow(object):
         self.stop_button.setObjectName(u"stop_button")
         self.stop_button.setMinimumSize(QSize(0, 30))
         self.stop_button.setMaximumSize(QSize(16777215, 30))
-        icon7 = QIcon()
-        icon7.addFile(u":/icons/images/icons/cil-media-stop.png", QSize(), QIcon.Normal, QIcon.Off)
-        self.stop_button.setIcon(icon7)
+        icon8 = QIcon()
+        icon8.addFile(u":/icons/images/icons/cil-media-stop.png", QSize(), QIcon.Normal, QIcon.Off)
+        self.stop_button.setIcon(icon8)
         self.stop_button.setIconSize(QSize(30, 30))
         self.stop_button.setCheckable(True)
 
@@ -1210,9 +1231,9 @@ class Ui_MainWindow(object):
         self.pushButton.setFont(font)
         self.pushButton.setCursor(QCursor(Qt.PointingHandCursor))
         self.pushButton.setStyleSheet(u"background-color: rgb(52, 59, 72);")
-        icon8 = QIcon()
-        icon8.addFile(u":/icons/images/icons/cil-folder-open.png", QSize(), QIcon.Normal, QIcon.Off)
-        self.pushButton.setIcon(icon8)
+        icon9 = QIcon()
+        icon9.addFile(u":/icons/images/icons/cil-folder-open.png", QSize(), QIcon.Normal, QIcon.Off)
+        self.pushButton.setIcon(icon9)
 
         self.gridLayout.addWidget(self.pushButton, 0, 1, 1, 1)
 
@@ -1287,7 +1308,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 274, 218))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 218, 218))
         self.scrollAreaWidgetContents.setStyleSheet(u" QScrollBar:vertical {\n"
 "	border: none;\n"
 "    background: rgb(52, 59, 72);\n"
@@ -1335,9 +1356,9 @@ class Ui_MainWindow(object):
         self.commandLinkButton.setObjectName(u"commandLinkButton")
         self.commandLinkButton.setCursor(QCursor(Qt.PointingHandCursor))
         self.commandLinkButton.setStyleSheet(u"")
-        icon9 = QIcon()
-        icon9.addFile(u":/icons/images/icons/cil-link.png", QSize(), QIcon.Normal, QIcon.Off)
-        self.commandLinkButton.setIcon(icon9)
+        icon10 = QIcon()
+        icon10.addFile(u":/icons/images/icons/cil-link.png", QSize(), QIcon.Normal, QIcon.Off)
+        self.commandLinkButton.setIcon(icon10)
 
         self.gridLayout_2.addWidget(self.commandLinkButton, 1, 6, 1, 1)
 
@@ -1670,7 +1691,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.stackedWidget.setCurrentIndex(1)
+        self.stackedWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -1692,7 +1713,11 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.extraCloseColumnBtn.setText("")
         self.pushButton_3.setText(QCoreApplication.translate("MainWindow", u"\u6a21\u578b\u7f6e\u4fe1\u5ea6:", None))
-        self.pushButton_2.setText(QCoreApplication.translate("MainWindow", u"\u5f53\u524d\u9009\u7528\u6a21\u578b\uff1a", None))
+        self.pushButton_2.setText(QCoreApplication.translate("MainWindow", u"\u5f53\u524d\u9009\u7528\u6a21\u578b:", None))
+        self.pushButton_4.setText(QCoreApplication.translate("MainWindow", u"\u8ddf\u8e2a\u7b97\u6cd5:", None))
+        self.trackerMethod.setItemText(0, QCoreApplication.translate("MainWindow", u"UCMCTracker", None))
+        self.trackerMethod.setItemText(1, QCoreApplication.translate("MainWindow", u"DeepSort", None))
+
         self.titleRightInfo.setText(QCoreApplication.translate("MainWindow", u"MOT-\u591a\u76ee\u6807\u8ddf\u8e2a\u7cfb\u7edf", None))
 #if QT_CONFIG(tooltip)
         self.settingsTopBtn.setToolTip(QCoreApplication.translate("MainWindow", u"Settings", None))
