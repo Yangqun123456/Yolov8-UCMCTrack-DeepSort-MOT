@@ -18,6 +18,8 @@ python main.py
 python3 main.py
 ```
 
+# 运行截图
+![image](./images/result.png)
 
 
 
