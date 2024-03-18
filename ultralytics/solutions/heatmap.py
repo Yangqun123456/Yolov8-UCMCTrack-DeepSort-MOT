@@ -146,18 +146,18 @@ class Heatmap:
             print("Using Circular shape now")
             self.shape = "circle"
 
-    def extract_results(self, tracks):
+    def extract_results(self, dets):
         """
         Extracts results from the provided data.
 
         Args:
-            tracks (list): List of tracks obtained from the object tracking process.
+            dets (list): List of detections obtained from the object detection process.
         """
-        self.boxes = tracks[0].boxes.xyxy.cpu()
-        self.clss = tracks[0].boxes.cls.cpu().tolist()
-        self.track_ids = tracks[0].boxes.id.int().cpu().tolist()
+        self.boxes = [(det.bb_left, det.bb_top, det.bb_left - det.bb_width, det.bb_top - det.bb_height) for det in dets]
+        self.track_ids = [det.track_id for det in dets]
+        self.clss = [det.det_class for det in dets]
 
-    def generate_heatmap(self, im0, tracks):
+    def generate_heatmap(self, im0, dets):
         """
         Generate heatmap based on tracking data.
 
@@ -166,13 +166,13 @@ class Heatmap:
             tracks (list): List of tracks obtained from the object tracking process.
         """
         self.im0 = im0
-        if tracks[0].boxes.id is None:
+        if len(dets) == 0:
             self.heatmap = np.zeros((int(self.imh), int(self.imw)), dtype=np.float32)
             if self.view_img and self.env_check:
                 self.display_frames()
             return im0
         self.heatmap *= self.decay_factor  # decay factor
-        self.extract_results(tracks)
+        self.extract_results(dets)
         self.annotator = Annotator(self.im0, self.count_txt_thickness, None)
 
         if self.count_reg_pts is not None:
@@ -262,6 +262,8 @@ class Heatmap:
                 color=self.count_color,
             )
 
+        print(self.im0.shape)
+        print(heatmap_colored.shape)
         self.im0 = cv2.addWeighted(self.im0, 1 - self.heatmap_alpha, heatmap_colored, self.heatmap_alpha, 0)
 
         if self.env_check and self.view_img:

@@ -12,6 +12,8 @@ from utils.draw_img import draw_boxes, is_integer_string
 from tracker.UCMCTracker.ucmcTracker import UCMCTracker
 from tracker.DeepSortTracker.deepsort import DeepSortTracker
 from utils.chart import Scatter, analyzeData
+from utils.region_counter import is_inside_region, showCounterText
+from utils.DraggableLabel import counting_regions, get_line
 
 video_id_count = 0
 
@@ -39,6 +41,8 @@ class YoloPredictor(BasePredictor, QObject):
         self.progress_value = 0          # 进度条的值
         self.lock_id = None              # 锁定的ID
         self.tracker = 'UCMCTracker'     # 跟踪器
+        self.region_counter = False      # 区域计数
+        self.crossing_line = False     # 跨线计数
 
     # 单目标跟踪
     def single_object_tracking(self, dets, img_box, org, store_xyxy_for_id):
@@ -112,7 +116,11 @@ class YoloPredictor(BasePredictor, QObject):
                 try:
                     if self.continue_dtc:
                         ret, img_box = cap.read()
+                        img_hot = np.copy(img_box)  # 用于生成热力图
                         org = np.copy(img_box)
+                        # 初始化区域计数器
+                        for region in counting_regions:
+                            region["counts"] = 0
                         if not ret:
                             break
                         if self.tracker == 'UCMCTracker':
@@ -138,7 +146,7 @@ class YoloPredictor(BasePredictor, QObject):
                                 bbox_xywh, confidences, cls_ids, org)
                             # 将检测到的目标 ID 赋值给 det.track_id，并更新 bbox 值
                             for output, det in zip(outputs, dets):
-                                x1, y1, x2, y2, track_id,track_oid  = output
+                                x1, y1, x2, y2, track_id, track_oid = output
                                 det.bb_left = x1
                                 det.bb_top = y1
                                 det.bb_width = x2 - x1
@@ -159,9 +167,20 @@ class YoloPredictor(BasePredictor, QObject):
                                 identities.append(det.track_id)
                                 # 获取对象的类别ID
                                 object_ids.append(det.det_class)
+                                if self.region_counter:
+                                    # Check if detection inside region
+                                    for region in counting_regions:
+                                        if is_inside_region(bbox, region):
+                                            region["counts"] += 1
+
                         # 使用draw_boxes函数进行绘制
                         img_box = draw_boxes(
-                            img_box, bbox_xyxy, ucmcTracker.detector.model.names, object_ids, identities)
+                            img_box, bbox_xyxy, ucmcTracker.detector.model.names, object_ids, identities, get_line(), self.crossing_line)
+
+                        # 区域计数
+                        if self.region_counter:
+                            for region in counting_regions:
+                                showCounterText(img_box, region)
 
                         frame_id += 1
                         target_num, class_num = ucmcTracker.detector.count_targets_and_classes(

@@ -23,6 +23,7 @@ import cv2
 # ///////////////////////////////////////////////////////////////
 from modules import *
 from YoloPredictor import YoloPredictor
+from utils.DraggableLabel import DraggableLabel
 from widgets import *
 from utils.capnums import Camera
 
@@ -44,7 +45,12 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
         global widgets
         widgets = self.ui
-
+        widgets.Result_QF.layout().removeWidget(widgets.res_video)
+        widgets.res_video.setParent(None)
+        widgets.res_video.deleteLater()
+        widgets.res_video = DraggableLabel(self)
+        widgets.res_video.setObjectName("res_video")
+        widgets.Result_QF.layout().addWidget(widgets.res_video)
         # USE CUSTOM TITLE BAR | USE AS "False" FOR MAC OR LINUX
         # ///////////////////////////////////////////////////////////////
         Settings.ENABLE_CUSTOM_TITLE_BAR = True
@@ -79,6 +85,8 @@ class MainWindow(QMainWindow):
         widgets.src_cam_button.clicked.connect(self.camera_select)
         widgets.src_rtsp_button.clicked.connect(self.rtsp_seletction)
         widgets.src_lock_button.clicked.connect(self.lock_id_selection)
+        widgets.crossing_line_button.clicked.connect(self.crossing_line)
+        widgets.region_counter_button.clicked.connect(self.region_counter)
         # EXTRA LEFT BOX
 
         def openCloseLeftBox():
@@ -113,7 +121,7 @@ class MainWindow(QMainWindow):
         widgets.stackedWidget.setCurrentWidget(widgets.home)
         widgets.src_file_button.setStyleSheet(
             UIFunctions.selectMenu(widgets.src_file_button.styleSheet()))
-
+   
         # 更改模型
         self.pt_list = os.listdir('./weights')
         self.pt_list = [file for file in self.pt_list if file.endswith(
@@ -190,6 +198,8 @@ class MainWindow(QMainWindow):
                 nw = int(scal * iw)
                 nh = h
                 img_src_ = cv2.resize(img_src, (nw, nh))
+            label.ih = ih
+            label.iw = iw
             frame = cv2.cvtColor(img_src_, cv2.COLOR_BGR2RGB)
             img = QImage(frame.data, frame.shape[1], frame.shape[0], frame.shape[2] * frame.shape[1],
                          QImage.Format_RGB888)
@@ -403,7 +413,22 @@ class MainWindow(QMainWindow):
             widgets.conf_spinbox.setValue(x/100)
             self.show_status('置信度: %s' % str(x/100))
             self.yolo_predict.conf_thres = x/100
+    
+    # 区域计数
+    def region_counter(self):
+        if not self.yolo_predict.stop_dtc:
+            if self.yolo_predict.region_counter:
+                self.yolo_predict.region_counter = False
+            else:
+                self.yolo_predict.region_counter = True
 
+    # 越线计数
+    def crossing_line(self):
+        if not self.yolo_predict.stop_dtc:
+            if self.yolo_predict.crossing_line:
+                self.yolo_predict.crossing_line = False
+            else:
+                self.yolo_predict.crossing_line = True
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
