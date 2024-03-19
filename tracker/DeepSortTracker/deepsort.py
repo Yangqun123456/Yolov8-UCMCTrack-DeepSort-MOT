@@ -1,4 +1,5 @@
 import cv2
+import torch
 from ultralytics import YOLO
 from tracker.DeepSortTracker.utils.parser import get_config
 from tracker.DeepSortTracker.deep_sort import DeepSort
@@ -82,8 +83,34 @@ class DeepSortTracker:
     def __init__(self, model):
         self.detector = Detector()
         self.detector.load(model)
-        self.tracker= DeepSort(cfg_deep.DEEPSORT.REID_CKPT,
-                            max_dist=cfg_deep.DEEPSORT.MAX_DIST, min_confidence=cfg_deep.DEEPSORT.MIN_CONFIDENCE,
-                            nms_max_overlap=cfg_deep.DEEPSORT.NMS_MAX_OVERLAP, max_iou_distance=cfg_deep.DEEPSORT.MAX_IOU_DISTANCE,
-                            max_age=cfg_deep.DEEPSORT.MAX_AGE, n_init=cfg_deep.DEEPSORT.N_INIT, nn_budget=cfg_deep.DEEPSORT.NN_BUDGET,
-                            use_cuda=True)
+        self.tracker = DeepSort(cfg_deep.DEEPSORT.REID_CKPT,
+                                max_dist=cfg_deep.DEEPSORT.MAX_DIST, min_confidence=cfg_deep.DEEPSORT.MIN_CONFIDENCE,
+                                nms_max_overlap=cfg_deep.DEEPSORT.NMS_MAX_OVERLAP, max_iou_distance=cfg_deep.DEEPSORT.MAX_IOU_DISTANCE,
+                                max_age=cfg_deep.DEEPSORT.MAX_AGE, n_init=cfg_deep.DEEPSORT.N_INIT, nn_budget=cfg_deep.DEEPSORT.NN_BUDGET,
+                                use_cuda=True)
+
+    def update(self, dets, org):
+        # 将 dets 转换为 DeepSort 所需的格式
+        bbox_xywh = []
+        confidences = []
+        cls_ids = []
+        for det in dets:
+            bbox_xywh.append(
+                [det.bb_left, det.bb_top, det.bb_width, det.bb_height])
+            confidences.append(det.conf)
+            cls_ids.append(det.det_class)
+        bbox_xywh = torch.Tensor(bbox_xywh)
+        confidences = torch.Tensor(confidences)
+        # 使用 DeepSort 的 update 函数更新跟踪器的状态
+        outputs = self.tracker.update(
+            bbox_xywh, confidences, cls_ids, org)
+        # 将检测到的目标 ID 赋值给 det.track_id，并更新 bbox 值
+        for output, det in zip(outputs, dets):
+            x1, y1, x2, y2, track_id, track_oid = output
+            det.bb_left = x1
+            det.bb_top = y1
+            det.bb_width = x2 - x1
+            det.bb_height = y2 - y1
+            det.track_id = track_id
+            det.det_class = track_oid
+        return dets

@@ -127,7 +127,7 @@ class YoloPredictor(BasePredictor, QObject):
             speed_obj = speed_estimation.SpeedEstimator()
             speed_obj.set_args(reg_pts=[(0, 360), (1280, 360)],
                                names=ucmcTracker.detector.model.names)
-            
+
             # Init distance-calculation obj
             dist_obj = distance_calculation.DistanceCalculation()
             dist_obj.set_args(names=ucmcTracker.detector.model.names)
@@ -145,6 +145,7 @@ class YoloPredictor(BasePredictor, QObject):
                             region["counts"] = 0
                         if not ret:
                             break
+                        # 追踪器
                         if self.tracker == 'UCMCTracker':
                             dets = ucmcTracker.detector.get_dets(
                                 img_box, class_list, self.conf_thres)
@@ -152,29 +153,7 @@ class YoloPredictor(BasePredictor, QObject):
                         elif self.tracker == 'DeepSort':
                             dets = deepsortTracker.detector.get_dets(
                                 img_box, class_list, self.conf_thres)
-                            # 将 dets 转换为 DeepSort 所需的格式
-                            bbox_xywh = []
-                            confidences = []
-                            cls_ids = []
-                            for det in dets:
-                                bbox_xywh.append(
-                                    [det.bb_left, det.bb_top, det.bb_width, det.bb_height])
-                                confidences.append(det.conf)
-                                cls_ids.append(det.det_class)
-                            bbox_xywh = torch.Tensor(bbox_xywh)
-                            confidences = torch.Tensor(confidences)
-                            # 使用 DeepSort 的 update 函数更新跟踪器的状态
-                            outputs = deepsortTracker.tracker.update(
-                                bbox_xywh, confidences, cls_ids, org)
-                            # 将检测到的目标 ID 赋值给 det.track_id，并更新 bbox 值
-                            for output, det in zip(outputs, dets):
-                                x1, y1, x2, y2, track_id, track_oid = output
-                                det.bb_left = x1
-                                det.bb_top = y1
-                                det.bb_width = x2 - x1
-                                det.bb_height = y2 - y1
-                                det.track_id = track_id
-                                det.det_class = track_oid
+                            dets = deepsortTracker.update(dets, org)
 
                         # 热力图
                         if self.show_hot_img:
@@ -182,33 +161,16 @@ class YoloPredictor(BasePredictor, QObject):
                                 img_second, dets)
                         # 速度估计
                         elif self.show_speed_img:
-                            img_second = speed_obj.estimate_speed(img_second, dets)
+                            img_second = speed_obj.estimate_speed(
+                                img_second, dets)
                         # 距离估计
                         elif self.show_distence_img:
-                            img_second = dist_obj.start_process(img_second, dets)
+                            img_second = dist_obj.start_process(
+                                img_second, dets)
 
-                        bbox_xyxy = []
-                        identities = []
-                        object_ids = []
-                        for det in dets:
-                            if det.track_id > 0:
-                                # 计算bbox的坐标
-                                bbox = [int(det.bb_left), int(det.bb_top), int(
-                                    det.bb_left+det.bb_width), int(det.bb_top+det.bb_height)]
-                                bbox_xyxy.append(bbox)
-                                # 获取对象的ID
-                                identities.append(det.track_id)
-                                # 获取对象的类别ID
-                                object_ids.append(det.det_class)
-                                if self.region_counter:
-                                    # Check if detection inside region
-                                    for region in counting_regions:
-                                        if is_inside_region(bbox, region):
-                                            region["counts"] += 1
-
-                        # 使用draw_boxes函数进行绘制
-                        img_box = draw_boxes(
-                            img_box, bbox_xyxy, ucmcTracker.detector.model.names, object_ids, identities, get_line(), self.crossing_line)
+                        # 使用draw_img_box进行绘制
+                        img_box = self.draw_img_box(
+                            dets, img_box, ucmcTracker.detector.model.names, counting_regions)
 
                         # 区域计数
                         if self.region_counter:
@@ -216,11 +178,12 @@ class YoloPredictor(BasePredictor, QObject):
                                 showCounterText(img_box, region)
 
                         frame_id += 1
+                        # 获取目标数与类别数
                         target_num, class_num = ucmcTracker.detector.count_targets_and_classes(
                             dets)
-
+                        # 保存视频
                         video_out.write(img_box)
-
+                        # 检测终止
                         if self.stop_dtc:
                             video_out.release()
                             video_id_count += 1
@@ -232,7 +195,8 @@ class YoloPredictor(BasePredictor, QObject):
                         try:
                             # 绘图
                             if frame_id % 20 == 0:
-                                graph_data = analyzeData(object_ids)
+                                graph_data = analyzeData(
+                                    self.generate_object_ids(dets))
                                 graphDataList.append(graph_data)
                                 timesListGraph.append(
                                     datetime.datetime.now().strftime('%H:%M:%S'))
@@ -301,3 +265,36 @@ class YoloPredictor(BasePredictor, QObject):
                 video_id_count += 1
             except:
                 pass
+
+    def draw_img_box(self, dets, img_box, names, counting_regions):
+        bbox_xyxy = []
+        identities = []
+        object_ids = []
+        for det in dets:
+            if det.track_id > 0:
+                # 计算bbox的坐标
+                bbox = [int(det.bb_left), int(det.bb_top), int(
+                    det.bb_left+det.bb_width), int(det.bb_top+det.bb_height)]
+                bbox_xyxy.append(bbox)
+                # 获取对象的ID
+                identities.append(det.track_id)
+                # 获取对象的类别ID
+                object_ids.append(det.det_class)
+                if self.region_counter:
+                    # Check if detection inside region
+                    for region in counting_regions:
+                        if is_inside_region(bbox, region):
+                            region["counts"] += 1
+
+        # 使用draw_boxes函数进行绘制
+        img_box = draw_boxes(
+            img_box, bbox_xyxy, names, object_ids, identities, get_line(), self.crossing_line)
+        return img_box
+
+    def generate_object_ids(self, dets):
+        object_ids = []
+        for det in dets:
+            if det.track_id > 0:
+                # 获取对象的类别ID
+                object_ids.append(det.det_class)
+        return object_ids

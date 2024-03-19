@@ -47,30 +47,7 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
         global widgets
         widgets = self.ui
-        # 获取 splitter 中的所有组件
-        children = widgets.splitter.children()
-        # 找到 res_video 和 second_video 组件并移除
-        to_delete = []
-        for child in children:
-            if child.objectName() in ["res_video", "second_video"]:
-                to_delete.append(child)
-
-        for child in to_delete:
-            child.setParent(None)
-            child.deleteLater()
-        # 创建新的 res_video 组件并添加到 splitter 中
-        widgets.second_video = ClickableLabel(self)
-        widgets.second_video.setObjectName("second_video")
-        widgets.splitter.addWidget(widgets.second_video)
-        widgets.res_video = DraggableLabel(self)
-        widgets.res_video.setObjectName("res_video")
-        widgets.splitter.addWidget(widgets.res_video)
-        # 设置 res_video 占满整个 splitter
-        index = widgets.splitter.indexOf(widgets.res_video)
-        widgets.splitter.setStretchFactor(index, 1)
-        for i in range(widgets.splitter.count()):
-            if i != index:
-                widgets.splitter.setStretchFactor(i, 0)
+        self.reset_splitter(widgets)
         # USE CUSTOM TITLE BAR | USE AS "False" FOR MAC OR LINUX
         # ///////////////////////////////////////////////////////////////
         Settings.ENABLE_CUSTOM_TITLE_BAR = True
@@ -110,7 +87,8 @@ class MainWindow(QMainWindow):
         widgets.region_counter_button.clicked.connect(self.region_counter)
         widgets.heatmap_button.clicked.connect(self.heatmap)
         widgets.speed_estimate_button.clicked.connect(self.speed_estimate)
-        widgets.distence_estimate_button.clicked.connect(self.distence_estimate)
+        widgets.distence_estimate_button.clicked.connect(
+            self.distence_estimate)
         # EXTRA LEFT BOX
 
         def openCloseLeftBox():
@@ -451,6 +429,7 @@ class MainWindow(QMainWindow):
             if self.yolo_predict.region_counter:
                 self.yolo_predict.region_counter = False
             else:
+                self.yolo_predict.crossing_line = False
                 self.yolo_predict.region_counter = True
 
     # 越线计数
@@ -459,6 +438,7 @@ class MainWindow(QMainWindow):
             if self.yolo_predict.crossing_line:
                 self.yolo_predict.crossing_line = False
             else:
+                self.yolo_predict.region_counter = False
                 self.yolo_predict.crossing_line = True
 
     # 绘制热力图
@@ -467,54 +447,79 @@ class MainWindow(QMainWindow):
             if self.yolo_predict.show_hot_img:
                 widgets.second_video.clear()  # 清空视频显示
                 # 设置 res_video 占满整个 splitter
-                for i in range(widgets.splitter.count()):
-                    widgets.splitter.setStretchFactor(
-                        i, 0 if i != widgets.splitter.indexOf(widgets.res_video) else 1)
+                self.set_res_video_fullscreen(widgets)
                 self.yolo_predict.show_hot_img = False
             else:
                 # 设置 均分 splitter
-                for i in range(widgets.splitter.count()):
-                    widgets.splitter.setStretchFactor(i, 1 if i in [widgets.splitter.indexOf(
-                        widgets.res_video), widgets.splitter.indexOf(widgets.second_video)] else 0)
+                self.set_splitter_evenly(widgets)
                 self.yolo_predict.show_distence_img = False
                 self.yolo_predict.show_speed_img = False
                 self.yolo_predict.show_hot_img = True
     # 速度估计
+
     def speed_estimate(self):
         if not self.yolo_predict.stop_dtc:
             if self.yolo_predict.show_speed_img:
                 widgets.second_video.clear()  # 清空视频显示
                 # 设置 res_video 占满整个 splitter
-                for i in range(widgets.splitter.count()):
-                    widgets.splitter.setStretchFactor(
-                        i, 0 if i != widgets.splitter.indexOf(widgets.res_video) else 1)
+                self.set_res_video_fullscreen(widgets)
                 self.yolo_predict.show_speed_img = False
             else:
                 # 设置 均分 splitter
-                for i in range(widgets.splitter.count()):
-                    widgets.splitter.setStretchFactor(i, 1 if i in [widgets.splitter.indexOf(
-                        widgets.res_video), widgets.splitter.indexOf(widgets.second_video)] else 0)
+                self.set_splitter_evenly(widgets)
                 self.yolo_predict.show_hot_img = False
                 self.yolo_predict.show_distence_img = False
                 self.yolo_predict.show_speed_img = True
     # 距离估计
+
     def distence_estimate(self):
         if not self.yolo_predict.stop_dtc:
             if self.yolo_predict.show_distence_img:
                 widgets.second_video.clear()
                 # 设置 res_video 占满整个 splitter
-                for i in range(widgets.splitter.count()):
-                    widgets.splitter.setStretchFactor(
-                        i, 0 if i != widgets.splitter.indexOf(widgets.res_video) else 1)
+                self.set_res_video_fullscreen(widgets)
                 self.yolo_predict.show_distence_img = False
             else:
                 # 设置 均分 splitter
-                for i in range(widgets.splitter.count()):
-                    widgets.splitter.setStretchFactor(i, 1 if i in [widgets.splitter.indexOf(
-                        widgets.res_video), widgets.splitter.indexOf(widgets.second_video)] else 0)
+                self.set_splitter_evenly(widgets)
                 self.yolo_predict.show_speed_img = False
                 self.yolo_predict.show_hot_img = False
                 self.yolo_predict.show_distence_img = True
+
+    # 设置 res_video 占满整个 splitter
+    def set_res_video_fullscreen(self, widgets):
+        for i in range(widgets.splitter.count()):
+            widgets.splitter.setStretchFactor(
+                i, 0 if i != widgets.splitter.indexOf(widgets.res_video) else 1)
+
+    # 设置 均分 splitter
+    def set_splitter_evenly(widgets):
+        for i in range(widgets.splitter.count()):
+            widgets.splitter.setStretchFactor(
+                i, 1 if i in [widgets.splitter.indexOf(widgets.res_video), widgets.splitter.indexOf(widgets.second_video)] else 0)
+
+    # 重置splitter
+    def reset_splitter(self, widgets):
+        # 获取 splitter 中的所有组件
+        children = widgets.splitter.children()
+        # 找到 res_video 和 second_video 组件并移除
+        to_delete = []
+        for child in children:
+            if child.objectName() in ["res_video", "second_video"]:
+                to_delete.append(child)
+
+        for child in to_delete:
+            child.setParent(None)
+            child.deleteLater()
+        # 创建新的 res_video 组件并添加到 splitter 中
+        widgets.second_video = ClickableLabel(self)
+        widgets.second_video.setObjectName("second_video")
+        widgets.splitter.addWidget(widgets.second_video)
+        widgets.res_video = DraggableLabel(self)
+        widgets.res_video.setObjectName("res_video")
+        widgets.splitter.addWidget(widgets.res_video)
+        # 设置 res_video 占满整个 splitter
+        self.set_res_video_fullscreen(widgets)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
