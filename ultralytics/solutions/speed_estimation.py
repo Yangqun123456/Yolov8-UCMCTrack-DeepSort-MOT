@@ -6,7 +6,6 @@ from time import time
 import cv2
 import numpy as np
 
-from ultralytics.utils.checks import check_imshow
 from ultralytics.utils.plotting import Annotator, colors
 
 
@@ -43,7 +42,7 @@ class SpeedEstimator:
         self.trk_previous_points = {}
 
         # Check if environment support imshow
-        self.env_check = check_imshow(warn=True)
+        # self.env_check = check_imshow(warn=True)
 
     def set_args(
         self,
@@ -75,16 +74,16 @@ class SpeedEstimator:
         self.region_thickness = region_thickness
         self.spdl_dist_thresh = spdl_dist_thresh
 
-    def extract_tracks(self, tracks):
+    def extract_results(self, dets):
         """
         Extracts results from the provided data.
 
         Args:
             tracks (list): List of tracks obtained from the object tracking process.
         """
-        self.boxes = tracks[0].boxes.xyxy.cpu()
-        self.clss = tracks[0].boxes.cls.cpu().tolist()
-        self.trk_ids = tracks[0].boxes.id.int().cpu().tolist()
+        self.boxes = [(det.bb_left, det.bb_top, det.bb_left+det.bb_width, det.bb_top+det.bb_height) for det in dets]
+        self.trk_ids = [det.track_id for det in dets]
+        self.clss = [det.det_class for det in dets]
 
     def store_track_info(self, track_id, box):
         """
@@ -119,7 +118,7 @@ class SpeedEstimator:
 
         self.annotator.box_label(box, speed_label, bbox_color)
 
-        cv2.polylines(self.im0, [self.trk_pts], isClosed=False, color=(0, 255, 0), thickness=1)
+        # cv2.polylines(self.im0, [self.trk_pts], isClosed=False, color=(0, 255, 0), thickness=1)
         cv2.circle(self.im0, (int(track[-1][0]), int(track[-1][1])), 5, bbox_color, -1)
 
     def calculate_speed(self, trk_id, track):
@@ -154,7 +153,7 @@ class SpeedEstimator:
         self.trk_previous_times[trk_id] = time()
         self.trk_previous_points[trk_id] = track[-1]
 
-    def estimate_speed(self, im0, tracks, region_color=(255, 0, 0)):
+    def estimate_speed(self, im0, dets, region_color=(255, 0, 0)):
         """
         Calculate object based on tracking data.
 
@@ -164,11 +163,11 @@ class SpeedEstimator:
             region_color (tuple): Color to use when drawing regions.
         """
         self.im0 = im0
-        if tracks[0].boxes.id is None:
-            if self.view_img and self.env_check:
-                self.display_frames()
+        if len(dets) == 0:
+            # if self.view_img and self.env_check:
+            #     self.display_frames()
             return im0
-        self.extract_tracks(tracks)
+        self.extract_results(dets)
 
         self.annotator = Annotator(self.im0, line_width=2)
         self.annotator.draw_region(reg_pts=self.reg_pts, color=region_color, thickness=self.region_thickness)
@@ -182,16 +181,16 @@ class SpeedEstimator:
             self.plot_box_and_track(trk_id, box, cls, track)
             self.calculate_speed(trk_id, track)
 
-        if self.view_img and self.env_check:
-            self.display_frames()
+        # if self.view_img and self.env_check:
+        #     self.display_frames()
 
         return im0
 
-    def display_frames(self):
-        """Display frame."""
-        cv2.imshow("Ultralytics Speed Estimation", self.im0)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            return
+    # def display_frames(self):
+    #     """Display frame."""
+    #     cv2.imshow("Ultralytics Speed Estimation", self.im0)
+    #     if cv2.waitKey(1) & 0xFF == ord("q"):
+    #         return
 
 
 if __name__ == "__main__":

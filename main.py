@@ -23,6 +23,7 @@ import cv2
 # ///////////////////////////////////////////////////////////////
 from modules import *
 from YoloPredictor import YoloPredictor
+from utils.ClickableLabel import ClickableLabel
 from utils.DraggableLabel import DraggableLabel
 from widgets import *
 from utils.capnums import Camera
@@ -33,6 +34,7 @@ os.environ["QT_FONT_DPI"] = "96"
 # SET AS GLOBAL WIDGETS
 # ///////////////////////////////////////////////////////////////
 widgets = None
+
 
 class MainWindow(QMainWindow):
     main2yolo_begin_sgl = Signal()  # 主窗口向yolo实例发送执行信号
@@ -45,12 +47,30 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
         global widgets
         widgets = self.ui
-        widgets.Result_QF.layout().removeWidget(widgets.res_video)
-        widgets.res_video.setParent(None)
-        widgets.res_video.deleteLater()
+        # 获取 splitter 中的所有组件
+        children = widgets.splitter.children()
+        # 找到 res_video 和 second_video 组件并移除
+        to_delete = []
+        for child in children:
+            if child.objectName() in ["res_video", "second_video"]:
+                to_delete.append(child)
+
+        for child in to_delete:
+            child.setParent(None)
+            child.deleteLater()
+        # 创建新的 res_video 组件并添加到 splitter 中
+        widgets.second_video = ClickableLabel(self)
+        widgets.second_video.setObjectName("second_video")
+        widgets.splitter.addWidget(widgets.second_video)
         widgets.res_video = DraggableLabel(self)
         widgets.res_video.setObjectName("res_video")
-        widgets.Result_QF.layout().addWidget(widgets.res_video)
+        widgets.splitter.addWidget(widgets.res_video)
+        # 设置 res_video 占满整个 splitter
+        index = widgets.splitter.indexOf(widgets.res_video)
+        widgets.splitter.setStretchFactor(index, 1)
+        for i in range(widgets.splitter.count()):
+            if i != index:
+                widgets.splitter.setStretchFactor(i, 0)
         # USE CUSTOM TITLE BAR | USE AS "False" FOR MAC OR LINUX
         # ///////////////////////////////////////////////////////////////
         Settings.ENABLE_CUSTOM_TITLE_BAR = True
@@ -85,8 +105,12 @@ class MainWindow(QMainWindow):
         widgets.src_cam_button.clicked.connect(self.camera_select)
         widgets.src_rtsp_button.clicked.connect(self.rtsp_seletction)
         widgets.src_lock_button.clicked.connect(self.lock_id_selection)
+        # RIGHT MENUS
         widgets.crossing_line_button.clicked.connect(self.crossing_line)
         widgets.region_counter_button.clicked.connect(self.region_counter)
+        widgets.heatmap_button.clicked.connect(self.heatmap)
+        widgets.speed_estimate_button.clicked.connect(self.speed_estimate)
+        widgets.distence_estimate_button.clicked.connect(self.distence_estimate)
         # EXTRA LEFT BOX
 
         def openCloseLeftBox():
@@ -121,7 +145,7 @@ class MainWindow(QMainWindow):
         widgets.stackedWidget.setCurrentWidget(widgets.home)
         widgets.src_file_button.setStyleSheet(
             UIFunctions.selectMenu(widgets.src_file_button.styleSheet()))
-   
+
         # 更改模型
         self.pt_list = os.listdir('./weights')
         self.pt_list = [file for file in self.pt_list if file.endswith(
@@ -134,7 +158,8 @@ class MainWindow(QMainWindow):
         self.Qtimer_ModelBox.timeout.connect(self.ModelBoxRefre)
         self.Qtimer_ModelBox.start(2000)
         widgets.model_box.currentTextChanged.connect(self.change_model)
-        widgets.trackerMethod.currentTextChanged.connect(self.change_tracker_model)
+        widgets.trackerMethod.currentTextChanged.connect(
+            self.change_tracker_model)
         # 更改置信度
         widgets.conf_spinbox.valueChanged.connect(
             lambda x: self.change_val(x, 'conf_spinbox'))
@@ -147,7 +172,9 @@ class MainWindow(QMainWindow):
         self.yolo_predict.new_model_name = "./weights/%s" % self.select_model
         self.yolo_thread = QThread()
         self.yolo_predict.yolo2main_box_img.connect(
-            lambda x: self.show_image(x, widgets.res_video))
+            lambda x: self.show_image(x, widgets.res_video))   # 绘制检测框图
+        self.yolo_predict.yolo2main_second_img.connect(
+            lambda x: self.show_image(x, widgets.second_video))  # 绘制热力图/速度图
         self.yolo_predict.yolo2main_status_msg.connect(
             lambda x: self.show_status(x))
         self.yolo_predict.yolo2main_fps.connect(
@@ -180,6 +207,8 @@ class MainWindow(QMainWindow):
     @staticmethod
     def show_image(img_src, label):
         try:
+            if label.geometry().width() == 0 or label.geometry().height() == 0:
+                return
             if len(img_src.shape) == 3:
                 ih, iw, _ = img_src.shape
             if len(img_src.shape) == 2:
@@ -269,6 +298,7 @@ class MainWindow(QMainWindow):
         widgets.conf_slider.setEnabled(True)
         widgets.conf_spinbox.setEnabled(True)
         widgets.res_video.clear()  # 清空视频显示
+        widgets.second_video.clear()  # 清空视频显示
         widgets.progressBar.setValue(0)  # 进度条清零
         widgets.Class_num.setText('--')
         widgets.Target_num.setText('--')
@@ -389,10 +419,11 @@ class MainWindow(QMainWindow):
         self.yolo_predict.new_model_name = "./weights/%s" % self.select_model
         self.show_status('更改模型：%s' % self.select_model)
     # 跟踪算法更换
+
     def change_tracker_model(self, x):
         self.yolo_predict.tracker = widgets.trackerMethod.currentText()
         self.show_status('更改跟踪算法：%s' % widgets.trackerMethod.currentText())
-    
+
     # 循环监测文件夹的文件变化
     def ModelBoxRefre(self):
         pt_list = os.listdir('./weights')
@@ -413,7 +444,7 @@ class MainWindow(QMainWindow):
             widgets.conf_spinbox.setValue(x/100)
             self.show_status('置信度: %s' % str(x/100))
             self.yolo_predict.conf_thres = x/100
-    
+
     # 区域计数
     def region_counter(self):
         if not self.yolo_predict.stop_dtc:
@@ -429,6 +460,61 @@ class MainWindow(QMainWindow):
                 self.yolo_predict.crossing_line = False
             else:
                 self.yolo_predict.crossing_line = True
+
+    # 绘制热力图
+    def heatmap(self):
+        if not self.yolo_predict.stop_dtc:
+            if self.yolo_predict.show_hot_img:
+                widgets.second_video.clear()  # 清空视频显示
+                # 设置 res_video 占满整个 splitter
+                for i in range(widgets.splitter.count()):
+                    widgets.splitter.setStretchFactor(
+                        i, 0 if i != widgets.splitter.indexOf(widgets.res_video) else 1)
+                self.yolo_predict.show_hot_img = False
+            else:
+                # 设置 均分 splitter
+                for i in range(widgets.splitter.count()):
+                    widgets.splitter.setStretchFactor(i, 1 if i in [widgets.splitter.indexOf(
+                        widgets.res_video), widgets.splitter.indexOf(widgets.second_video)] else 0)
+                self.yolo_predict.show_distence_img = False
+                self.yolo_predict.show_speed_img = False
+                self.yolo_predict.show_hot_img = True
+    # 速度估计
+    def speed_estimate(self):
+        if not self.yolo_predict.stop_dtc:
+            if self.yolo_predict.show_speed_img:
+                widgets.second_video.clear()  # 清空视频显示
+                # 设置 res_video 占满整个 splitter
+                for i in range(widgets.splitter.count()):
+                    widgets.splitter.setStretchFactor(
+                        i, 0 if i != widgets.splitter.indexOf(widgets.res_video) else 1)
+                self.yolo_predict.show_speed_img = False
+            else:
+                # 设置 均分 splitter
+                for i in range(widgets.splitter.count()):
+                    widgets.splitter.setStretchFactor(i, 1 if i in [widgets.splitter.indexOf(
+                        widgets.res_video), widgets.splitter.indexOf(widgets.second_video)] else 0)
+                self.yolo_predict.show_hot_img = False
+                self.yolo_predict.show_distence_img = False
+                self.yolo_predict.show_speed_img = True
+    # 距离估计
+    def distence_estimate(self):
+        if not self.yolo_predict.stop_dtc:
+            if self.yolo_predict.show_distence_img:
+                widgets.second_video.clear()
+                # 设置 res_video 占满整个 splitter
+                for i in range(widgets.splitter.count()):
+                    widgets.splitter.setStretchFactor(
+                        i, 0 if i != widgets.splitter.indexOf(widgets.res_video) else 1)
+                self.yolo_predict.show_distence_img = False
+            else:
+                # 设置 均分 splitter
+                for i in range(widgets.splitter.count()):
+                    widgets.splitter.setStretchFactor(i, 1 if i in [widgets.splitter.indexOf(
+                        widgets.res_video), widgets.splitter.indexOf(widgets.second_video)] else 0)
+                self.yolo_predict.show_speed_img = False
+                self.yolo_predict.show_hot_img = False
+                self.yolo_predict.show_distence_img = True
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

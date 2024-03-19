@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainnBylzF.ui'
+## Form generated from reading UI file 'mainGrenFn.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.6.2
 ##
@@ -20,8 +20,9 @@ from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea, QApplicat
     QGridLayout, QHBoxLayout, QHeaderView, QLabel,
     QLineEdit, QMainWindow, QPlainTextEdit, QProgressBar,
     QPushButton, QRadioButton, QScrollArea, QScrollBar,
-    QSizePolicy, QSlider, QSpacerItem, QStackedWidget,
-    QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
+    QSizePolicy, QSlider, QSpacerItem, QSplitter,
+    QStackedWidget, QTableWidget, QTableWidgetItem, QVBoxLayout,
+    QWidget)
 from .resources_rc import *
 
 class Ui_MainWindow(object):
@@ -1164,12 +1165,20 @@ class Ui_MainWindow(object):
         self.Result_QF.setFrameShadow(QFrame.Raised)
         self.verticalLayout_21 = QVBoxLayout(self.Result_QF)
         self.verticalLayout_21.setObjectName(u"verticalLayout_21")
-        self.verticalLayout_21.setContentsMargins(9, 9, -1, -1)
-        self.res_video = QLabel(self.Result_QF)
+        self.splitter = QSplitter(self.Result_QF)
+        self.splitter.setObjectName(u"splitter")
+        self.splitter.setStyleSheet(u"#splitter::handle{background: 1px solid  rgba(200, 200, 200, 100);}")
+        self.splitter.setFrameShadow(QFrame.Plain)
+        self.splitter.setOrientation(Qt.Horizontal)
+        self.res_video = QLabel(self.splitter)
         self.res_video.setObjectName(u"res_video")
         self.res_video.setAlignment(Qt.AlignCenter)
+        self.splitter.addWidget(self.res_video)
+        self.second_video = QLabel(self.splitter)
+        self.second_video.setObjectName(u"second_video")
+        self.splitter.addWidget(self.second_video)
 
-        self.verticalLayout_21.addWidget(self.res_video)
+        self.verticalLayout_21.addWidget(self.splitter)
 
 
         self.verticalLayout_20.addWidget(self.Result_QF)
@@ -1604,8 +1613,8 @@ class Ui_MainWindow(object):
         self.topMenus.setObjectName(u"topMenus")
         sizePolicy1.setHeightForWidth(self.topMenus.sizePolicy().hasHeightForWidth())
         self.topMenus.setSizePolicy(sizePolicy1)
-        self.topMenus.setMinimumSize(QSize(0, 135))
-        self.topMenus.setMaximumSize(QSize(16777215, 135))
+        self.topMenus.setMinimumSize(QSize(0, 0))
+        self.topMenus.setMaximumSize(QSize(16777215, 16777215))
         self.topMenus.setLayoutDirection(Qt.LeftToRight)
         self.topMenus.setFrameShape(QFrame.NoFrame)
         self.topMenus.setFrameShadow(QFrame.Raised)
@@ -1621,7 +1630,7 @@ class Ui_MainWindow(object):
         self.crossing_line_button.setFont(font)
         self.crossing_line_button.setCursor(QCursor(Qt.PointingHandCursor))
         self.crossing_line_button.setLayoutDirection(Qt.LeftToRight)
-        self.crossing_line_button.setStyleSheet(u"background-image: url(:/icons/images/icons/cil-envelope-open.png);")
+        self.crossing_line_button.setStyleSheet(u"background-image: url(:/icons/images/icons/cil-minus.png);")
 
         self.verticalLayout_14.addWidget(self.crossing_line_button)
 
@@ -1633,28 +1642,42 @@ class Ui_MainWindow(object):
         self.region_counter_button.setFont(font)
         self.region_counter_button.setCursor(QCursor(Qt.PointingHandCursor))
         self.region_counter_button.setLayoutDirection(Qt.LeftToRight)
-        self.region_counter_button.setStyleSheet(u"background-image: url(:/icons/images/icons/cil-print.png);")
+        self.region_counter_button.setStyleSheet(u"background-image: url(:/icons/images/icons/cil-comment-square.png);")
 
         self.verticalLayout_14.addWidget(self.region_counter_button)
 
-        self.btn_logout = QPushButton(self.topMenus)
-        self.btn_logout.setObjectName(u"btn_logout")
-        sizePolicy.setHeightForWidth(self.btn_logout.sizePolicy().hasHeightForWidth())
-        self.btn_logout.setSizePolicy(sizePolicy)
-        self.btn_logout.setMinimumSize(QSize(0, 45))
-        self.btn_logout.setFont(font)
-        self.btn_logout.setCursor(QCursor(Qt.PointingHandCursor))
-        self.btn_logout.setLayoutDirection(Qt.LeftToRight)
-        self.btn_logout.setStyleSheet(u"background-image: url(:/icons/images/icons/cil-account-logout.png);")
+        self.heatmap_button = QPushButton(self.topMenus)
+        self.heatmap_button.setObjectName(u"heatmap_button")
+        sizePolicy.setHeightForWidth(self.heatmap_button.sizePolicy().hasHeightForWidth())
+        self.heatmap_button.setSizePolicy(sizePolicy)
+        self.heatmap_button.setMinimumSize(QSize(0, 45))
+        self.heatmap_button.setFont(font)
+        self.heatmap_button.setCursor(QCursor(Qt.PointingHandCursor))
+        self.heatmap_button.setLayoutDirection(Qt.LeftToRight)
+        self.heatmap_button.setStyleSheet(u"background-image: url(:/icons/images/icons/cil-fire.png);")
 
-        self.verticalLayout_14.addWidget(self.btn_logout)
+        self.verticalLayout_14.addWidget(self.heatmap_button)
 
+        self.speed_estimate_button = QPushButton(self.topMenus)
+        self.speed_estimate_button.setObjectName(u"speed_estimate_button")
+        self.speed_estimate_button.setMinimumSize(QSize(0, 45))
+        self.speed_estimate_button.setStyleSheet(u"background-image: url(:/icons/images/icons/cil-speedometer.png);")
 
-        self.verticalLayout_23.addWidget(self.topMenus)
+        self.verticalLayout_14.addWidget(self.speed_estimate_button)
+
+        self.distence_estimate_button = QPushButton(self.topMenus)
+        self.distence_estimate_button.setObjectName(u"distence_estimate_button")
+        self.distence_estimate_button.setMinimumSize(QSize(0, 45))
+        self.distence_estimate_button.setStyleSheet(u"background-image: url(:/icons/images/icons/cil-link.png);")
+
+        self.verticalLayout_14.addWidget(self.distence_estimate_button)
 
         self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
-        self.verticalLayout_23.addItem(self.verticalSpacer)
+        self.verticalLayout_14.addItem(self.verticalSpacer)
+
+
+        self.verticalLayout_23.addWidget(self.topMenus)
 
 
         self.verticalLayout_7.addWidget(self.contentSettings)
@@ -1779,6 +1802,7 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.closeAppBtn.setText("")
         self.res_video.setText("")
+        self.second_video.setText("")
         self.run_button.setText("")
         self.stop_button.setText("")
         self.labelBoxBlenderInstalation.setText(QCoreApplication.translate("MainWindow", u"FILE BOX", None))
@@ -1849,7 +1873,9 @@ class Ui_MainWindow(object):
 
         self.crossing_line_button.setText(QCoreApplication.translate("MainWindow", u"\u8d8a\u7ebf\u8ba1\u6570", None))
         self.region_counter_button.setText(QCoreApplication.translate("MainWindow", u"\u533a\u57df\u8ba1\u6570", None))
-        self.btn_logout.setText(QCoreApplication.translate("MainWindow", u"Logout", None))
+        self.heatmap_button.setText(QCoreApplication.translate("MainWindow", u"\u70ed\u529b\u56fe", None))
+        self.speed_estimate_button.setText(QCoreApplication.translate("MainWindow", u"\u901f\u5ea6\u4f30\u8ba1", None))
+        self.distence_estimate_button.setText(QCoreApplication.translate("MainWindow", u"\u8ddd\u79bb\u4f30\u8ba1", None))
         self.status_bar.setText(QCoreApplication.translate("MainWindow", u"\u6b22\u8fce\u4f7f\u7528MOT-\u591a\u76ee\u6807\u8ddf\u8e2a\u7cfb\u7edf", None))
         self.version.setText(QCoreApplication.translate("MainWindow", u"v1.0.3", None))
     # retranslateUi

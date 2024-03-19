@@ -7,6 +7,7 @@ import os
 import torch
 from ultralytics.data.loaders import LoadStreams
 from ultralytics.engine.predictor import BasePredictor
+from ultralytics.solutions import distance_calculation, heatmap, speed_estimation
 from ultralytics.utils.torch_utils import smart_inference_mode
 from utils.draw_img import draw_boxes, is_integer_string
 from tracker.UCMCTracker.ucmcTracker import UCMCTracker
@@ -20,6 +21,7 @@ video_id_count = 0
 
 class YoloPredictor(BasePredictor, QObject):
     yolo2main_box_img = Signal(np.ndarray)  # 绘制了标签与锚框的图像的信号
+    yolo2main_second_img = Signal(np.ndarray)  # 绘制热力图的信号
     yolo2main_status_msg = Signal(str)  # 检测/暂停/停止/测试完成等信号
     yolo2main_fps = Signal(str)  # fps
     yolo2main_progress = Signal(int)  # 进度条
@@ -43,6 +45,9 @@ class YoloPredictor(BasePredictor, QObject):
         self.tracker = 'UCMCTracker'     # 跟踪器
         self.region_counter = False      # 区域计数
         self.crossing_line = False     # 跨线计数
+        self.show_hot_img = False        # 显示热力图
+        self.show_speed_img = False      # 显示速度估计
+        self.show_distence_img = False   # 显示距离估计
 
     # 单目标跟踪
     def single_object_tracking(self, dets, img_box, org, store_xyxy_for_id):
@@ -110,13 +115,30 @@ class YoloPredictor(BasePredictor, QObject):
             ucmcTracker = UCMCTracker(
                 self.new_model_name, cap.get(cv2.CAP_PROP_FPS))
             deepsortTracker = DeepSortTracker(self.new_model_name)
+
+            # Init heatmap
+            heatmap_obj = heatmap.Heatmap()
+            heatmap_obj.set_args(colormap=cv2.COLORMAP_PARULA,
+                                 imw=cap.get(cv2.CAP_PROP_FRAME_WIDTH),
+                                 imh=cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
+                                 shape="circle")
+
+            # Init speed-estimation obj
+            speed_obj = speed_estimation.SpeedEstimator()
+            speed_obj.set_args(reg_pts=[(0, 360), (1280, 360)],
+                               names=ucmcTracker.detector.model.names)
+            
+            # Init distance-calculation obj
+            dist_obj = distance_calculation.DistanceCalculation()
+            dist_obj.set_args(names=ucmcTracker.detector.model.names)
+
             # 循环读取视频帧
             frame_id = 1
             while True:
                 try:
                     if self.continue_dtc:
                         ret, img_box = cap.read()
-                        img_hot = np.copy(img_box)  # 用于生成热力图
+                        img_second = np.copy(img_box)  # 用于生成热力图
                         org = np.copy(img_box)
                         # 初始化区域计数器
                         for region in counting_regions:
@@ -153,6 +175,17 @@ class YoloPredictor(BasePredictor, QObject):
                                 det.bb_height = y2 - y1
                                 det.track_id = track_id
                                 det.det_class = track_oid
+
+                        # 热力图
+                        if self.show_hot_img:
+                            img_second = heatmap_obj.generate_heatmap(
+                                img_second, dets)
+                        # 速度估计
+                        elif self.show_speed_img:
+                            img_second = speed_obj.estimate_speed(img_second, dets)
+                        # 距离估计
+                        elif self.show_distence_img:
+                            img_second = dist_obj.start_process(img_second, dets)
 
                         bbox_xyxy = []
                         identities = []
@@ -204,7 +237,11 @@ class YoloPredictor(BasePredictor, QObject):
                                 timesListGraph.append(
                                     datetime.datetime.now().strftime('%H:%M:%S'))
                                 Scatter(timesListGraph, graphDataList)
+
+                            # 显示结果视频
                             self.yolo2main_box_img.emit(img_box)
+                            if self.show_hot_img or self.show_speed_img or self.show_distence_img:
+                                self.yolo2main_second_img.emit(img_second)
 
                             # 进度条
                             try:

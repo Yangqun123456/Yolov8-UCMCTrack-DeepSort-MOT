@@ -4,8 +4,8 @@ import math
 
 import cv2
 
-from ultralytics.utils.checks import check_imshow
 from ultralytics.utils.plotting import Annotator, colors
+from utils.ClickableLabel import get_selected_boxes, set_distence_boxes
 
 
 class DistanceCalculation:
@@ -39,7 +39,7 @@ class DistanceCalculation:
         self.selected_boxes = {}
 
         # Check if environment support imshow
-        self.env_check = check_imshow(warn=True)
+        # self.env_check = check_imshow(warn=True)
 
     def set_args(
         self,
@@ -94,16 +94,16 @@ class DistanceCalculation:
             self.selected_boxes = {}
             self.left_mouse_count = 0
 
-    def extract_tracks(self, tracks):
+    def extract_tracks(self, dets):
         """
         Extracts results from the provided data.
 
         Args:
             tracks (list): List of tracks obtained from the object tracking process.
         """
-        self.boxes = tracks[0].boxes.xyxy.cpu()
-        self.clss = tracks[0].boxes.cls.cpu().tolist()
-        self.trk_ids = tracks[0].boxes.id.int().cpu().tolist()
+        self.boxes = [(det.bb_left, det.bb_top, det.bb_left+det.bb_width, det.bb_top+det.bb_height) for det in dets]
+        self.trk_ids = [det.track_id for det in dets]
+        self.clss = [det.det_class for det in dets]
 
     def calculate_centroid(self, box):
         """
@@ -125,7 +125,7 @@ class DistanceCalculation:
         pixel_distance = math.sqrt((centroid1[0] - centroid2[0]) ** 2 + (centroid1[1] - centroid2[1]) ** 2)
         return pixel_distance / self.pixel_per_meter, (pixel_distance / self.pixel_per_meter) * 1000
 
-    def start_process(self, im0, tracks):
+    def start_process(self, im0, dets):
         """
         Calculate distance between two bounding boxes based on tracking data.
 
@@ -134,12 +134,13 @@ class DistanceCalculation:
             tracks (list): List of tracks obtained from the object tracking process.
         """
         self.im0 = im0
-        if tracks[0].boxes.id is None:
-            if self.view_img:
-                self.display_frames()
+        if len(dets) == 0:
+            # if self.view_img:
+            #     self.display_frames()
             return
-        self.extract_tracks(tracks)
-
+        self.extract_tracks(dets)
+        set_distence_boxes(self.boxes, self.trk_ids)
+        self.selected_boxes = get_selected_boxes()
         self.annotator = Annotator(self.im0, line_width=2)
 
         for box, cls, track_id in zip(self.boxes, self.clss, self.trk_ids):
@@ -162,19 +163,19 @@ class DistanceCalculation:
 
         self.centroids = []
 
-        if self.view_img and self.env_check:
-            self.display_frames()
+        # if self.view_img and self.env_check:
+        #     self.display_frames()
 
         return im0
 
-    def display_frames(self):
-        """Display frame."""
-        cv2.namedWindow("Ultralytics Distance Estimation")
-        cv2.setMouseCallback("Ultralytics Distance Estimation", self.mouse_event_for_distance)
-        cv2.imshow("Ultralytics Distance Estimation", self.im0)
+    # def display_frames(self):
+    #     """Display frame."""
+    #     cv2.namedWindow("Ultralytics Distance Estimation")
+    #     cv2.setMouseCallback("Ultralytics Distance Estimation", self.mouse_event_for_distance)
+    #     cv2.imshow("Ultralytics Distance Estimation", self.im0)
 
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            return
+    #     if cv2.waitKey(1) & 0xFF == ord("q"):
+    #         return
 
 
 if __name__ == "__main__":

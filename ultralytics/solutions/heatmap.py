@@ -5,7 +5,7 @@ from collections import defaultdict
 import cv2
 import numpy as np
 
-from ultralytics.utils.checks import check_imshow, check_requirements
+from ultralytics.utils.checks import check_requirements
 from ultralytics.utils.plotting import Annotator
 
 check_requirements("shapely>=2.0.0")
@@ -61,7 +61,7 @@ class Heatmap:
         self.decay_factor = 0.99
 
         # Check if environment support imshow
-        self.env_check = check_imshow(warn=True)
+        # self.env_check = check_imshow(warn=True)
 
     def set_args(
         self,
@@ -151,9 +151,9 @@ class Heatmap:
         Extracts results from the provided data.
 
         Args:
-            dets (list): List of detections obtained from the object detection process.
+            tracks (list): List of tracks obtained from the object tracking process.
         """
-        self.boxes = [(det.bb_left, det.bb_top, det.bb_left - det.bb_width, det.bb_top - det.bb_height) for det in dets]
+        self.boxes = [(det.bb_left, det.bb_top, det.bb_left+det.bb_width, det.bb_top+det.bb_height) for det in dets]
         self.track_ids = [det.track_id for det in dets]
         self.clss = [det.det_class for det in dets]
 
@@ -168,8 +168,8 @@ class Heatmap:
         self.im0 = im0
         if len(dets) == 0:
             self.heatmap = np.zeros((int(self.imh), int(self.imw)), dtype=np.float32)
-            if self.view_img and self.env_check:
-                self.display_frames()
+            # if self.view_img and self.env_check:
+            #     self.display_frames()
             return im0
         self.heatmap *= self.decay_factor  # decay factor
         self.extract_results(dets)
@@ -262,21 +262,18 @@ class Heatmap:
                 color=self.count_color,
             )
 
-        print(self.im0.shape)
-        print(heatmap_colored.shape)
         self.im0 = cv2.addWeighted(self.im0, 1 - self.heatmap_alpha, heatmap_colored, self.heatmap_alpha, 0)
 
-        if self.env_check and self.view_img:
-            self.display_frames()
+        # if self.env_check and self.view_img:
+        #     self.display_frames()
 
         return self.im0
 
-    def display_frames(self):
-        """Display frame."""
-        cv2.imshow("Ultralytics Heatmap", self.im0)
-
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            return
+    # def display_frames(self):
+    #     """Display frame."""
+    #     cv2.imshow("Ultralytics Heatmap", self.im0)
+    #     if cv2.waitKey(1) & 0xFF == ord("q"):
+    #         return
 
 
 if __name__ == "__main__":
