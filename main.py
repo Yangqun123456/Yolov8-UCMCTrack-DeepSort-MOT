@@ -215,6 +215,7 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print(repr(e))
 
+    # 选择文件
     def open_src_file(self):
         UIFunctions.resetStyle(self, 'src_file_button')
         widgets.src_file_button.setStyleSheet(
@@ -235,6 +236,7 @@ class MainWindow(QMainWindow):
                 f.write(config_json)
             self.stop()
 
+    # 开始或继续检测
     def run_or_continue(self):
         if self.yolo_predict.source == '' or self.yolo_predict.source == None:
             self.show_status('请在检测前选择输入源...')
@@ -264,6 +266,7 @@ class MainWindow(QMainWindow):
 
                 widgets.run_button.setChecked(False)
 
+    # 终止检测
     def stop(self):
         try:
             self.yolo_thread.quit()  # 结束线程
@@ -283,6 +286,7 @@ class MainWindow(QMainWindow):
         widgets.fps_label.setText('--')
         self.show_status("检测终止")
 
+    # 显示状态信息
     def show_status(self, msg):
         widgets.status_bar.setText(msg)
         if msg == 'Detection completed' or msg == '检测完成':
@@ -300,6 +304,7 @@ class MainWindow(QMainWindow):
             widgets.Target_num.setText('--')
             widgets.fps_label.setText('--')
 
+    # 选择摄像头
     def camera_select(self):
         UIFunctions.resetStyle(self, 'src_cam_button')
         widgets.src_cam_button.setStyleSheet(
@@ -396,8 +401,8 @@ class MainWindow(QMainWindow):
         self.select_model = widgets.model_box.currentText()
         self.yolo_predict.new_model_name = "./weights/%s" % self.select_model
         self.show_status('更改模型：%s' % self.select_model)
-    # 跟踪算法更换
 
+    # 跟踪算法更换
     def change_tracker_model(self, x):
         self.yolo_predict.tracker = widgets.trackerMethod.currentText()
         self.show_status('更改跟踪算法：%s' % widgets.trackerMethod.currentText())
@@ -455,8 +460,8 @@ class MainWindow(QMainWindow):
                 self.yolo_predict.show_distence_img = False
                 self.yolo_predict.show_speed_img = False
                 self.yolo_predict.show_hot_img = True
-    # 速度估计
 
+    # 速度估计
     def speed_estimate(self):
         if not self.yolo_predict.stop_dtc:
             if self.yolo_predict.show_speed_img:
@@ -470,8 +475,8 @@ class MainWindow(QMainWindow):
                 self.yolo_predict.show_hot_img = False
                 self.yolo_predict.show_distence_img = False
                 self.yolo_predict.show_speed_img = True
-    # 距离估计
 
+    # 距离估计
     def distence_estimate(self):
         if not self.yolo_predict.stop_dtc:
             if self.yolo_predict.show_distence_img:
@@ -493,7 +498,7 @@ class MainWindow(QMainWindow):
                 i, 0 if i != widgets.splitter.indexOf(widgets.res_video) else 1)
 
     # 设置 均分 splitter
-    def set_splitter_evenly(widgets):
+    def set_splitter_evenly(self, widgets):
         for i in range(widgets.splitter.count()):
             widgets.splitter.setStretchFactor(
                 i, 1 if i in [widgets.splitter.indexOf(widgets.res_video), widgets.splitter.indexOf(widgets.second_video)] else 0)
@@ -520,6 +525,7 @@ class MainWindow(QMainWindow):
         widgets.splitter.addWidget(widgets.res_video)
         # 设置 res_video 占满整个 splitter
         self.set_res_video_fullscreen(widgets)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

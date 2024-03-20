@@ -181,6 +181,8 @@ class YoloPredictor(BasePredictor, QObject):
                         # 获取目标数与类别数
                         target_num, class_num = ucmcTracker.detector.count_targets_and_classes(
                             dets)
+                        self.yolo2main_class_num.emit(class_num)
+                        self.yolo2main_target_num.emit(target_num)
                         # 保存视频
                         video_out.write(img_box)
                         # 检测终止
@@ -192,54 +194,45 @@ class YoloPredictor(BasePredictor, QObject):
                             LoadStreams.capture = 'release'  # 这里是为了终止使用摄像头检测函数的线程，改了yolo源码
                             break
 
-                        try:
-                            # 绘图
-                            if frame_id % 20 == 0:
-                                graph_data = analyzeData(
-                                    self.generate_object_ids(dets))
-                                graphDataList.append(graph_data)
-                                timesListGraph.append(
-                                    datetime.datetime.now().strftime('%H:%M:%S'))
-                                Scatter(timesListGraph, graphDataList)
+                        # 绘图
+                        if frame_id % 20 == 0:
+                            graph_data = analyzeData(
+                                self.generate_object_ids(dets))
+                            graphDataList.append(graph_data)
+                            timesListGraph.append(
+                                datetime.datetime.now().strftime('%H:%M:%S'))
+                            Scatter(timesListGraph, graphDataList)
 
-                            # 显示结果视频
-                            self.yolo2main_box_img.emit(img_box)
-                            if self.show_hot_img or self.show_speed_img or self.show_distence_img:
-                                self.yolo2main_second_img.emit(img_second)
+                        # 显示结果视频
+                        self.yolo2main_box_img.emit(img_box)
+                        if self.show_hot_img or self.show_speed_img or self.show_distence_img:
+                            self.yolo2main_second_img.emit(img_second)
 
-                            # 进度条
+                        # 显示进度条
+                        self.progress_value = int(  # 进度条
+                            (frame_id/total_frames)*1000)
+                        self.yolo2main_progress.emit(
+                            self.progress_value)
+
+                        # 单目标跟踪
+                        if self.lock_id is not None:
+                            self.lock_id = int(self.lock_id)
                             try:
-                                self.progress_value = int(  # 进度条
-                                    (frame_id/total_frames)*1000)
-                                self.yolo2main_progress.emit(
-                                    self.progress_value)
-                            except:
+                                result_cropped = self.single_object_tracking(
+                                    dets, img_box, org, store_xyxy_for_id)
+                                cv2.imshow(
+                                    f'OBJECT-ID:{self.lock_id}', result_cropped)
+                                cv2.moveWindow(
+                                    f'OBJECT-ID:{self.lock_id}', 0, 0)
+                                # press esc to quit
+                                if cv2.waitKey(5) & 0xFF == 27:
+                                    self.lock_id = None
+                                    cv2.destroyAllWindows()
+                            except Exception as e:
+                                cv2.destroyAllWindows()
                                 pass
 
-                            # 单目标跟踪
-                            if self.lock_id is not None:
-                                self.lock_id = int(self.lock_id)
-                                try:
-                                    result_cropped = self.single_object_tracking(
-                                        dets, img_box, org, store_xyxy_for_id)
-                                    cv2.imshow(
-                                        f'OBJECT-ID:{self.lock_id}', result_cropped)
-                                    cv2.moveWindow(
-                                        f'OBJECT-ID:{self.lock_id}', 0, 0)
-                                    # press esc to quit
-                                    if cv2.waitKey(5) & 0xFF == 27:
-                                        self.lock_id = None
-                                        cv2.destroyAllWindows()
-                                except Exception as e:
-                                    cv2.destroyAllWindows()
-                                    pass
-
-                            self.yolo2main_class_num.emit(class_num)
-                            self.yolo2main_target_num.emit(target_num)
-                        except:
-                            pass
                         count += 1
-
                         if count % 3 == 0 and count >= 3:  # 计算FPS
                             self.yolo2main_fps.emit(
                                 str(int(3/(time.time()-start_time))))
@@ -252,7 +245,7 @@ class YoloPredictor(BasePredictor, QObject):
                         self.yolo2main_status_msg.emit('检测终止')
                         break
 
-            # 检测截止（本地文件检测）
+                # 检测截止（本地文件检测）
                 except StopIteration:
                     video_out.release()
                     video_id_count += 1
