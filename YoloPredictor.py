@@ -7,9 +7,7 @@ import time
 import cv2
 import datetime
 import os
-import torch
 from ultralytics.data.loaders import LoadStreams
-from ultralytics.engine.predictor import BasePredictor
 from ultralytics.solutions import distance_calculation, heatmap, speed_estimation
 from ultralytics.utils.torch_utils import smart_inference_mode
 from utils.draw_img import draw_boxes, is_integer_string
@@ -22,7 +20,7 @@ from utils.DraggableLabel import counting_regions, get_line
 video_id_count = 0
 
 
-class YoloPredictor(BasePredictor, QObject):
+class YoloPredictor(QObject):
     yolo2main_box_img = Signal(np.ndarray)  # 绘制了标签与锚框的图像的信号
     yolo2main_second_img = Signal(np.ndarray)  # 绘制热力图的信号
     yolo2main_status_msg = Signal(str)  # 检测/暂停/停止/测试完成等信号
@@ -33,7 +31,6 @@ class YoloPredictor(BasePredictor, QObject):
 
     def __init__(self):
         super(YoloPredictor, self).__init__()
-        QObject.__init__(self)
 
         # GUI args
         self.used_model_name = None      # 使用过的检测模型名称
@@ -96,7 +93,6 @@ class YoloPredictor(BasePredictor, QObject):
             except:
                 pass
             if self.used_model_name != self.new_model_name:
-                self.setup_model(self.new_model_name)
                 self.used_model_name = self.new_model_name
             self.yolo2main_status_msg.emit('检测中...')
             # 绘图参数
