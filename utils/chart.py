@@ -1,3 +1,6 @@
+# This file is part of Yolov8-UCMCTrack-DeepSort-MOT which is released under the AGPL-3.0 license.
+# See file LICENSE or go to https://github.com/Yangqun123456/Yolov8-UCMCTrack-DeepSort-MOT/tree/main/LICENSE for full license details.
+
 from pyecharts.charts import Line
 from pyecharts import options as opts
 

@@ -1,3 +1,6 @@
+# This file is part of Yolov8-UCMCTrack-DeepSort-MOT which is released under the AGPL-3.0 license.
+# See file LICENSE or go to https://github.com/Yangqun123456/Yolov8-UCMCTrack-DeepSort-MOT/tree/main/LICENSE for full license details.
+
 from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import Qt
 from shapely.geometry import Point, Polygon
@@ -23,7 +26,7 @@ counting_regions = [
     },
 ]
 
-line = [(100,500),(300,800)]
+line = [(100, 500), (300, 800)]
 
 
 class DraggableLabel(QLabel):
@@ -34,37 +37,37 @@ class DraggableLabel(QLabel):
         self.current_region = None
         self.ih = 0
         self.iw = 0
-        self.inRegion = False
         self.drawing_line = False
         self.line = []
+        # 功能bool值
+        self.crossing_line = False
+        self.region_counter = False
 
     def getPixelLocation(self, event):
         local_point = self.mapFromGlobal(event.globalPos())
         # Calculate the scale factors
-        scale_x = self.iw / self.pixmap().width()
-        scale_y = self.ih / self.pixmap().height()
+        scale_x = self.iw / self.pixmap().width() if self.pixmap().width() > 0 else 0
+        scale_y = self.ih / self.pixmap().height() if self.pixmap().height() > 0 else 0
         # Convert the coordinates from points to pixels
         pixel_x = local_point.x() * scale_x
         pixel_y = local_point.y() * scale_y
         return pixel_x, pixel_y
-    
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             pixel_x, pixel_y = self.getPixelLocation(event)
-            for region in self.counting_regions:
-                if region["polygon"].contains(Point((pixel_x, pixel_y))):
-                    self.current_region = region
-                    self.current_region["dragging"] = True
-                    self.current_region["offset_x"] = pixel_x
-                    self.current_region["offset_y"] = pixel_y
-                    self.inRegion = True
-                    break
-            if not self.inRegion:
+            if self.region_counter:
+                for region in self.counting_regions:
+                    if region["polygon"].contains(Point((pixel_x, pixel_y))):
+                        self.current_region = region
+                        self.current_region["dragging"] = True
+                        self.current_region["offset_x"] = pixel_x
+                        self.current_region["offset_y"] = pixel_y
+                        break
+            elif self.crossing_line:
                 self.drawing_line = True
                 self.line = []
                 self.line.append((int(pixel_x), int(pixel_y)))
-            else:
-                self.inRegion = False
 
     def mouseMoveEvent(self, event):
         if self.current_region is not None and self.current_region["dragging"]:
@@ -89,6 +92,7 @@ class DraggableLabel(QLabel):
             global line
             line = self.line
             self.drawing_line = False
+
 
 def get_line():
     return line

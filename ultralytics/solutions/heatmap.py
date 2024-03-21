@@ -1,4 +1,6 @@
-# Ultralytics YOLO 🚀, AGPL-3.0 license
+# Dscription: This file contains the Heatmap class which is used to draw heatmaps in real-time video stream based on their tracks.
+# This file is part of Yolov8-UCMCTrack-DeepSort-MOT which is released under the AGPL-3.0 license.
+# See file LICENSE or go to https://github.com/Yangqun123456/Yolov8-UCMCTrack-DeepSort-MOT/tree/main/LICENSE for full license details.
 
 from collections import defaultdict
 
@@ -153,9 +155,14 @@ class Heatmap:
         Args:
             tracks (list): List of tracks obtained from the object tracking process.
         """
-        self.boxes = [(det.bb_left, det.bb_top, det.bb_left+det.bb_width, det.bb_top+det.bb_height) for det in dets]
-        self.track_ids = [det.track_id for det in dets]
-        self.clss = [det.det_class for det in dets]
+        self.boxes = []
+        self.track_ids = []
+        self.clss = []
+        for det in dets:
+            if det.track_id > 0:
+                self.boxes.append((int(det.bb_left), int(det.bb_top), int(det.bb_left+det.bb_width), int(det.bb_top+det.bb_height)))
+                self.track_ids.append(det.track_id)
+                self.clss.append(det.det_class)
 
     def generate_heatmap(self, im0, dets):
         """

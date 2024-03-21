@@ -1,4 +1,6 @@
-# Ultralytics YOLO 🚀, AGPL-3.0 license
+# Description: This file contains the code to calculate distance between two objects in real-time video stream based on
+# This file is part of Yolov8-UCMCTrack-DeepSort-MOT which is released under the AGPL-3.0 license.
+# See file LICENSE or go to https://github.com/Yangqun123456/Yolov8-UCMCTrack-DeepSort-MOT/tree/main/LICENSE for full license details.
 
 import math
 
@@ -94,16 +96,21 @@ class DistanceCalculation:
             self.selected_boxes = {}
             self.left_mouse_count = 0
 
-    def extract_tracks(self, dets):
+    def extract_results(self, dets):
         """
         Extracts results from the provided data.
 
         Args:
             tracks (list): List of tracks obtained from the object tracking process.
         """
-        self.boxes = [(det.bb_left, det.bb_top, det.bb_left+det.bb_width, det.bb_top+det.bb_height) for det in dets]
-        self.trk_ids = [det.track_id for det in dets]
-        self.clss = [det.det_class for det in dets]
+        self.boxes = []
+        self.trk_ids = []
+        self.clss = []
+        for det in dets:
+            if det.track_id > 0:
+                self.boxes.append((int(det.bb_left), int(det.bb_top), int(det.bb_left+det.bb_width), int(det.bb_top+det.bb_height)))
+                self.trk_ids.append(det.track_id)
+                self.clss.append(det.det_class)
 
     def calculate_centroid(self, box):
         """
@@ -138,7 +145,7 @@ class DistanceCalculation:
             # if self.view_img:
             #     self.display_frames()
             return
-        self.extract_tracks(dets)
+        self.extract_results(dets)
         set_distence_boxes(self.boxes, self.trk_ids)
         self.selected_boxes = get_selected_boxes()
         self.annotator = Annotator(self.im0, line_width=2)

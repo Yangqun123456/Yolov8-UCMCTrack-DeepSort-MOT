@@ -1,4 +1,6 @@
-# Ultralytics YOLO 🚀, AGPL-3.0 license
+# Description: This file contains the code to estimate speed of objects in real-time video stream based on their tracks.
+# This file is part of Yolov8-UCMCTrack-DeepSort-MOT which is released under the AGPL-3.0 license.
+# See file LICENSE or go to https://github.com/Yangqun123456/Yolov8-UCMCTrack-DeepSort-MOT/tree/main/LICENSE for full license details.
 
 from collections import defaultdict
 from time import time
@@ -7,6 +9,7 @@ import cv2
 import numpy as np
 
 from ultralytics.utils.plotting import Annotator, colors
+from utils.ClickableLabel import get_reg_pts
 
 
 class SpeedEstimator:
@@ -51,7 +54,7 @@ class SpeedEstimator:
         view_img=False,
         line_thickness=2,
         region_thickness=5,
-        spdl_dist_thresh=10,
+        spdl_dist_thresh=20,
     ):
         """
         Configures the speed estimation and display parameters.
@@ -81,9 +84,14 @@ class SpeedEstimator:
         Args:
             tracks (list): List of tracks obtained from the object tracking process.
         """
-        self.boxes = [(det.bb_left, det.bb_top, det.bb_left+det.bb_width, det.bb_top+det.bb_height) for det in dets]
-        self.trk_ids = [det.track_id for det in dets]
-        self.clss = [det.det_class for det in dets]
+        self.boxes = []
+        self.trk_ids = []
+        self.clss = []
+        for det in dets:
+            if det.track_id > 0:
+                self.boxes.append((int(det.bb_left), int(det.bb_top), int(det.bb_left+det.bb_width), int(det.bb_top+det.bb_height)))
+                self.trk_ids.append(det.track_id)
+                self.clss.append(det.det_class)
 
     def store_track_info(self, track_id, box):
         """
@@ -118,7 +126,7 @@ class SpeedEstimator:
 
         self.annotator.box_label(box, speed_label, bbox_color)
 
-        # cv2.polylines(self.im0, [self.trk_pts], isClosed=False, color=(0, 255, 0), thickness=1)
+        cv2.polylines(self.im0, [self.trk_pts], isClosed=False, color=(0, 255, 0), thickness=1)
         cv2.circle(self.im0, (int(track[-1][0]), int(track[-1][1])), 5, bbox_color, -1)
 
     def calculate_speed(self, trk_id, track):
@@ -129,24 +137,34 @@ class SpeedEstimator:
             trk_id (int): object track id.
             track (list): tracking history for tracks path drawing
         """
-
-        if not self.reg_pts[0][0] < track[-1][0] < self.reg_pts[1][0]:
-            return
-        if self.reg_pts[1][1] - self.spdl_dist_thresh < track[-1][1] < self.reg_pts[1][1] + self.spdl_dist_thresh:
-            direction = "known"
-
-        elif self.reg_pts[0][1] - self.spdl_dist_thresh < track[-1][1] < self.reg_pts[0][1] + self.spdl_dist_thresh:
-            direction = "known"
-
-        else:
-            direction = "unknown"
+        if abs(self.reg_pts[0][0] - self.reg_pts[1][0]) > abs(self.reg_pts[0][1] - self.reg_pts[1][1]):  # More horizontal
+            if not self.reg_pts[0][0] < track[-1][0] < self.reg_pts[1][0]:
+                return
+            if self.reg_pts[1][1] - self.spdl_dist_thresh < track[-1][1] < self.reg_pts[1][1] + self.spdl_dist_thresh:
+                direction = "known"
+            elif self.reg_pts[0][1] - self.spdl_dist_thresh < track[-1][1] < self.reg_pts[0][1] + self.spdl_dist_thresh:
+                direction = "known"
+            else:
+                direction = "unknown"
+        else:  # More vertical
+            if not self.reg_pts[0][1] < track[-1][1] < self.reg_pts[1][1]:
+                return
+            if self.reg_pts[1][0] - self.spdl_dist_thresh < track[-1][0] < self.reg_pts[1][0] + self.spdl_dist_thresh:
+                direction = "known"
+            elif self.reg_pts[0][0] - self.spdl_dist_thresh < track[-1][0] < self.reg_pts[0][0] + self.spdl_dist_thresh:
+                direction = "known"
+            else:
+                direction = "unknown"
 
         if self.trk_previous_times[trk_id] != 0 and direction != "unknown" and trk_id not in self.trk_idslist:
             self.trk_idslist.append(trk_id)
 
             time_difference = time() - self.trk_previous_times[trk_id]
             if time_difference > 0:
-                dist_difference = np.abs(track[-1][1] - self.trk_previous_points[trk_id][1])
+                if abs(self.reg_pts[0][0] - self.reg_pts[1][0]) > abs(self.reg_pts[0][1] - self.reg_pts[1][1]): 
+                    dist_difference = np.abs(track[-1][0] - self.trk_previous_points[trk_id][0])
+                else:
+                    dist_difference = np.abs(track[-1][1] - self.trk_previous_points[trk_id][1])
                 speed = dist_difference / time_difference
                 self.dist_data[trk_id] = speed
 
@@ -163,12 +181,13 @@ class SpeedEstimator:
             region_color (tuple): Color to use when drawing regions.
         """
         self.im0 = im0
+        self.reg_pts = get_reg_pts()
+        print(self.reg_pts)
         if len(dets) == 0:
             # if self.view_img and self.env_check:
             #     self.display_frames()
             return im0
         self.extract_results(dets)
-
         self.annotator = Annotator(self.im0, line_width=2)
         self.annotator.draw_region(reg_pts=self.reg_pts, color=region_color, thickness=self.region_thickness)
 

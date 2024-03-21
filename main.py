@@ -1,18 +1,5 @@
-# ///////////////////////////////////////////////////////////////
-#
-# BY: WANDERSON M.PIMENTA
-# PROJECT MADE WITH: Qt Designer and PySide6
-# V: 1.0.0
-#
-# This project can be used freely for all uses, as long as they maintain the
-# respective credits only in the Python scripts, any information in the visual
-# interface (GUI) can be modified without any implication.
-#
-# There are limitations on Qt licenses if you want to use your products
-# commercially, I recommend reading them on the official website:
-# https://doc.qt.io/qtforpython/licenses.html
-#
-# ///////////////////////////////////////////////////////////////
+# This file is part of Yolov8-UCMCTrack-DeepSort-MOT which is released under the AGPL-3.0 license.
+# See file LICENSE or go to https://github.com/Yangqun123456/Yolov8-UCMCTrack-DeepSort-MOT/tree/main/LICENSE for full license details.
 
 import json
 import sys
@@ -432,18 +419,24 @@ class MainWindow(QMainWindow):
     def region_counter(self):
         if not self.yolo_predict.stop_dtc:
             if self.yolo_predict.region_counter:
+                widgets.res_video.region_counter = False
                 self.yolo_predict.region_counter = False
             else:
                 self.yolo_predict.crossing_line = False
+                widgets.res_video.crossing_line = False
+                widgets.res_video.region_counter = True
                 self.yolo_predict.region_counter = True
 
     # 越线计数
     def crossing_line(self):
         if not self.yolo_predict.stop_dtc:
             if self.yolo_predict.crossing_line:
+                widgets.res_video.crossing_line = False
                 self.yolo_predict.crossing_line = False
             else:
                 self.yolo_predict.region_counter = False
+                widgets.res_video.region_counter = False
+                widgets.res_video.crossing_line = True
                 self.yolo_predict.crossing_line = True
 
     # 绘制热力图
@@ -468,12 +461,15 @@ class MainWindow(QMainWindow):
                 widgets.second_video.clear()  # 清空视频显示
                 # 设置 res_video 占满整个 splitter
                 self.set_res_video_fullscreen(widgets)
+                widgets.second_video.speed_estimate = False
                 self.yolo_predict.show_speed_img = False
             else:
                 # 设置 均分 splitter
                 self.set_splitter_evenly(widgets)
                 self.yolo_predict.show_hot_img = False
                 self.yolo_predict.show_distence_img = False
+                widgets.second_video.distence_estimate = False
+                widgets.second_video.speed_estimate = True
                 self.yolo_predict.show_speed_img = True
 
     # 距离估计
@@ -483,12 +479,15 @@ class MainWindow(QMainWindow):
                 widgets.second_video.clear()
                 # 设置 res_video 占满整个 splitter
                 self.set_res_video_fullscreen(widgets)
+                widgets.second_video.distence_estimate = False
                 self.yolo_predict.show_distence_img = False
             else:
                 # 设置 均分 splitter
                 self.set_splitter_evenly(widgets)
                 self.yolo_predict.show_speed_img = False
                 self.yolo_predict.show_hot_img = False
+                widgets.second_video.speed_estimate = False
+                widgets.second_video.distence_estimate = True
                 self.yolo_predict.show_distence_img = True
 
     # 设置 res_video 占满整个 splitter
