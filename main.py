@@ -10,7 +10,7 @@ import cv2
 # ///////////////////////////////////////////////////////////////
 from modules import *
 from YoloPredictor import YoloPredictor
-from utils.DraggableLabel import DraggableLabel, set_counting_regions
+from utils.DraggableLabel import DraggableLabel
 from widgets import *
 from utils.capnums import Camera
 
