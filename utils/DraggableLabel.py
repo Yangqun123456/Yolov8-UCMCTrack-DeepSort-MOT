@@ -1,6 +1,7 @@
 # This file is part of Yolov8-UCMCTrack-DeepSort-MOT which is released under the AGPL-3.0 license.
 # See file LICENSE or go to https://github.com/Yangqun123456/Yolov8-UCMCTrack-DeepSort-MOT/tree/main/LICENSE for full license details.
 
+import math
 import random
 from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import Qt
@@ -56,6 +57,10 @@ class DraggableLabel(QLabel):
         self.speed_estimate = False
         global left_mouse_count
         left_mouse_count = 0
+        # 缩放
+        self.scaling = False
+        self.scale_index = None
+        self.last_mouse_position = None
 
     def getPixelLocation(self, event):
         local_point = self.mapFromGlobal(event.globalPos())
@@ -71,13 +76,21 @@ class DraggableLabel(QLabel):
         if event.button() == Qt.LeftButton:
             pixel_x, pixel_y = self.getPixelLocation(event)
             if self.region_counter:
-                for region in self.counting_regions:
+                for i, region in enumerate(self.counting_regions):
                     if region["polygon"].contains(Point((pixel_x, pixel_y))):
                         self.current_region = region
                         self.current_region["dragging"] = True
                         self.current_region["offset_x"] = pixel_x
                         self.current_region["offset_y"] = pixel_y
                         break
+                        # Check if the user clicked on a vertex
+                    for j, point in enumerate(region["polygon"].exterior.coords):
+                        if abs(point[0] - pixel_x) < 20 and abs(point[1] - pixel_y) < 20:  # Adjust the value as needed
+                            self.scaling = True
+                            self.scale_index = i
+                            self.last_mouse_position = (pixel_x, pixel_y)
+                            break
+
             elif self.crossing_line:
                 self.drawing_line = True
                 self.line = []
@@ -117,11 +130,35 @@ class DraggableLabel(QLabel):
             self.current_region["offset_x"] = pixel_x
             self.current_region["offset_y"] = pixel_y
             self.update()
+        elif self.scaling:
+            pixel_x, pixel_y = self.getPixelLocation(event)
+            i = self.scale_index
+            # Calculate the scaling factor based on the mouse movement
+            dx = pixel_x - self.last_mouse_position[0]
+            dy = pixel_y - self.last_mouse_position[1]
+            scale_factor = math.sqrt(dx**2 + dy**2) / 100  # Adjust the divisor as needed
+            # Calculate the center of the polygon
+            center = self.counting_regions[i]["polygon"].centroid.coords[0]
+            # Determine the direction of the mouse movement
+            last_distance = math.sqrt((self.last_mouse_position[0] - center[0])**2 + (self.last_mouse_position[1] - center[1])**2)
+            current_distance = math.sqrt((pixel_x - center[0])**2 + (pixel_y - center[1])**2)
+            if current_distance < last_distance:  # The mouse moved towards the center
+                scale_factor = 1 / (1 + scale_factor)
+            else:  # The mouse moved away from the center
+                scale_factor = 1 + scale_factor
+            # Scale the polygon
+            points = [(center[0] + scale_factor * (x - center[0]), center[1] + scale_factor * (y - center[1])) for x, y in self.counting_regions[i]["polygon"].exterior.coords]
+            self.counting_regions[i]["polygon"] = Polygon(points)
+            self.last_mouse_position = (pixel_x, pixel_y)
+            self.update()
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
             if self.current_region is not None and self.current_region["dragging"]:
                 self.current_region["dragging"] = False
+        if self.scaling:
+            self.scaling = False
+            self.last_mouse_position = None
         if self.crossing_line and self.drawing_line:
             pixel_x, pixel_y = self.getPixelLocation(event)
             self.line.append((int(pixel_x), int(pixel_y)))
