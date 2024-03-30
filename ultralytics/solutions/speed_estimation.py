@@ -9,7 +9,7 @@ import cv2
 import numpy as np
 
 from ultralytics.utils.plotting import Annotator, colors
-from utils.ClickableLabel import get_reg_pts
+from utils.DraggableLabel import get_reg_pts
 
 
 class SpeedEstimator:
@@ -182,7 +182,6 @@ class SpeedEstimator:
         """
         self.im0 = im0
         self.reg_pts = get_reg_pts()
-        print(self.reg_pts)
         if len(dets) == 0:
             # if self.view_img and self.env_check:
             #     self.display_frames()

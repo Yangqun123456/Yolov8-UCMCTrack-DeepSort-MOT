@@ -7,7 +7,7 @@ import math
 import cv2
 
 from ultralytics.utils.plotting import Annotator, colors
-from utils.ClickableLabel import get_selected_boxes, set_distence_boxes
+from utils.DraggableLabel import get_selected_boxes, set_distence_boxes
 
 
 class DistanceCalculation:

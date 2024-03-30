@@ -46,8 +46,8 @@ class YoloPredictor(QObject):
         self.region_counter = False      # 区域计数
         self.crossing_line = False     # 跨线计数
         self.show_hot_img = False        # 显示热力图
-        self.show_speed_img = False      # 显示速度估计
-        self.show_distence_img = False   # 显示距离估计
+        self.speed_estimate = False      # 显示速度估计
+        self.distence_estimate = False   # 显示距离估计
 
     # 单目标跟踪
     def single_object_tracking(self, dets, img_box, org, store_xyxy_for_id):
@@ -159,17 +159,18 @@ class YoloPredictor(QObject):
                             img_second = heatmap_obj.generate_heatmap(
                                 img_second, dets)
                         # 速度估计
-                        elif self.show_speed_img:
-                            img_second = speed_obj.estimate_speed(
-                                img_second, dets)
+                        elif self.speed_estimate:
+                            img_box = speed_obj.estimate_speed(
+                                img_box, dets)
                         # 距离估计
-                        elif self.show_distence_img:
-                            img_second = dist_obj.start_process(
-                                img_second, dets)
+                        elif self.distence_estimate:
+                            img_box = dist_obj.start_process(
+                                img_box, dets)
 
-                        # 使用draw_img_box进行绘制
-                        img_box = self.draw_img_box(
-                            dets, img_box, ucmcTracker.detector.model.names, counting_regions)
+                        if not self.speed_estimate and not self.distence_estimate:
+                            # 使用draw_img_box进行绘制
+                            img_box = self.draw_img_box(
+                                dets, img_box, ucmcTracker.detector.model.names, counting_regions)
 
                         # 区域计数
                         if self.region_counter:
@@ -204,7 +205,7 @@ class YoloPredictor(QObject):
 
                         # 显示结果视频
                         self.yolo2main_box_img.emit(img_box)
-                        if self.show_hot_img or self.show_speed_img or self.show_distence_img:
+                        if self.show_hot_img or self.speed_estimate or self.distence_estimate:
                             self.yolo2main_second_img.emit(img_second)
 
                         # 显示进度条
