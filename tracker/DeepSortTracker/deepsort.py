@@ -26,9 +26,8 @@ class Detection:
         self.track_id = 0
 
     def __str__(self):
-        return 'd{}, bb_box:[{},{},{},{}], conf={:.2f}, class{}, uv:[{:.0f},{:.0f}], mapped to:[{:.1f},{:.1f}]'.format(
-            self.id, self.bb_left, self.bb_top, self.bb_width, self.bb_height, self.conf, self.det_class,
-            self.bb_left+self.bb_width/2, self.bb_top+self.bb_height, self.y[0, 0], self.y[1, 0])
+        return 'd{}, bb_box:[{},{},{},{}], conf={:.2f}, class{}]]'.format(
+            self.id, self.bb_left, self.bb_top, self.bb_width, self.bb_height, self.conf, self.det_class)
 
     def __repr__(self):
         return self.__str__()
@@ -99,11 +98,14 @@ class DeepSortTracker:
         cls_ids = []
         for det in dets:
             bbox_xywh.append(
-                [det.bb_left, det.bb_top, det.bb_width, det.bb_height])
+                [det.bb_left+det.bb_width/2, det.bb_top+det.bb_height/2, det.bb_width, det.bb_height])
             confidences.append(det.conf)
             cls_ids.append(det.det_class)
         bbox_xywh = torch.Tensor(bbox_xywh)
         confidences = torch.Tensor(confidences)
+        # 如果没有检测到任何目标，直接返回
+        if bbox_xywh.nelement() == 0:
+            return dets
         # 使用 DeepSort 的 update 函数更新跟踪器的状态
         outputs = self.tracker.update(
             bbox_xywh, confidences, cls_ids, org)
