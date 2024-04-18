@@ -10,7 +10,7 @@ import os
 from ultralytics.data.loaders import LoadStreams
 from ultralytics.solutions import distance_calculation, heatmap, speed_estimation
 from ultralytics.utils.torch_utils import smart_inference_mode
-from utils.draw_img import draw_boxes, is_integer_string
+from utils.draw_img import clearCrossingLineCounter, draw_boxes, is_integer_string
 from tracker.UCMCTracker.ucmcTracker import UCMCTracker
 from tracker.DeepSortTracker.deepsort import DeepSortTracker
 from utils.chart import Scatter, analyzeData
@@ -98,6 +98,8 @@ class YoloPredictor(QObject):
             # 绘图参数
             timesListGraph = []
             graphDataList = []
+            # 清空划线计数计数器
+            clearCrossingLineCounter()
             # 获取视频流
             if is_integer_string(self.source):
                 self.source = int(self.source)

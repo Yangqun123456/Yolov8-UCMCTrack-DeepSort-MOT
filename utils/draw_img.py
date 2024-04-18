@@ -227,3 +227,10 @@ def is_integer_string(s):
         return True
     except ValueError:
         return False
+
+# 清空计数器
+def clearCrossingLineCounter():
+    global object_counter
+    global object_counter1
+    object_counter = {}
+    object_counter1 = {}
